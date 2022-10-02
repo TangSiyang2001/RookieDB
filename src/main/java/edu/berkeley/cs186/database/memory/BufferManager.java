@@ -328,6 +328,7 @@ public class BufferManager implements AutoCloseable {
             return ranges;
         }
 
+        @Override
         void setPageLSN(long pageLSN) {
             ByteBuffer.wrap(this.contents).putLong(8, pageLSN);
         }

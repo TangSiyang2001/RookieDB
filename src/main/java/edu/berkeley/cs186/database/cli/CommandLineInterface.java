@@ -9,8 +9,6 @@ import edu.berkeley.cs186.database.cli.parser.ParseException;
 import edu.berkeley.cs186.database.cli.parser.RookieParser;
 import edu.berkeley.cs186.database.cli.parser.TokenMgrError;
 import edu.berkeley.cs186.database.cli.visitor.StatementListVisitor;
-import edu.berkeley.cs186.database.concurrency.LockManager;
-import edu.berkeley.cs186.database.memory.ClockEvictionPolicy;
 import edu.berkeley.cs186.database.table.Record;
 import edu.berkeley.cs186.database.table.Schema;
 import edu.berkeley.cs186.database.table.Table;
@@ -29,19 +27,24 @@ public class CommandLineInterface {
     private static final String LABEL = "sp22";
 
     private InputStream in;
-    private PrintStream out; // Use instead of System.out to work across a network
-    private Database db;
-    private Random generator;
+
+    /**
+     * Use instead of System.out to work across a network
+     */
+    private final PrintStream out;
+    private final Database db;
+    private final Random generator;
 
     public static void main(String args[]) throws IOException {
         // Basic database for project 0 through 3
         Database db = new Database("demo", 25);
         
-        // Use the following after completing project 4 (locking)
-        // Database db = new Database("demo", 25, new LockManager());
-        
-        // Use the following after completing project 5 (recovery)
-        // Database db = new Database("demo", 25, new LockManager(), new ClockEvictionPolicy(), true);
+        /*
+         Use the following after completing project 4 (locking)
+         Database db = new Database("demo", 25, new LockManager());
+         Use the following after completing project 5 (recovery)
+         Database db = new Database("demo", 25, new LockManager(), new ClockEvictionPolicy(), true);
+        */
 
         db.loadDemo();
 
@@ -74,8 +77,9 @@ public class CommandLineInterface {
         while (true) {
             try {
                 input = bufferUserInput(inputScanner);
-                if (input.length() == 0)
+                if (input.length() == 0) {
                     continue;
+                }
                 if (input.startsWith("\\")) {
                     try {
                         parseMetaCommand(input, db);
@@ -84,7 +88,7 @@ public class CommandLineInterface {
                     }
                     continue;
                 }
-                if (input.equals("exit")) {
+                if ("exit".equals(input)) {
                     throw new NoSuchElementException();
                 }
             } catch (NoSuchElementException e) {
@@ -94,7 +98,8 @@ public class CommandLineInterface {
                     currTransaction.close();
                 }
                 this.out.println("exit");
-                this.out.println("Bye!"); // If MariaDB says it so can we :)
+                // If MariaDB says it so can we :)
+                this.out.println("Bye!");
                 return;
             }
 

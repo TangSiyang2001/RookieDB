@@ -869,6 +869,7 @@ public class Database implements AutoCloseable {
             }
         }
 
+        @Override
         public void deleteRecordWhere(String tableName, Function<Record, DataBox> condition) {
             Table tab = getTable(tableName);
             tableName = tab.getName();
