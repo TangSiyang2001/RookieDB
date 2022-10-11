@@ -3,7 +3,7 @@ package edu.berkeley.cs186.database.databox;
 import edu.berkeley.cs186.database.categories.Proj99Tests;
 import edu.berkeley.cs186.database.categories.SystemTests;
 import edu.berkeley.cs186.database.common.Buffer;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -20,7 +20,7 @@ public class TestType {
         assertEquals(boolType.getSizeInBytes(), 1);
 
         // Check toBytes and fromBytes.
-        Buffer buf = ByteBuffer.wrap(boolType.toBytes());
+        Buffer buf = ByteBuf.wrap(boolType.toBytes());
         assertEquals(boolType, Type.fromBytes(buf));
 
         // Check equality.
@@ -39,7 +39,7 @@ public class TestType {
         assertEquals(intType.getSizeInBytes(), 4);
 
         // Check toBytes and fromBytes.
-        Buffer buf = ByteBuffer.wrap(intType.toBytes());
+        Buffer buf = ByteBuf.wrap(intType.toBytes());
         assertEquals(intType, Type.fromBytes(buf));
 
         // Check equality.
@@ -58,7 +58,7 @@ public class TestType {
         assertEquals(floatType.getSizeInBytes(), 4);
 
         // Check toBytes and fromBytes.
-        Buffer buf = ByteBuffer.wrap(floatType.toBytes());
+        Buffer buf = ByteBuf.wrap(floatType.toBytes());
         assertEquals(floatType, Type.fromBytes(buf));
 
         // Check equality.
@@ -82,7 +82,7 @@ public class TestType {
         assertEquals(stringType.getSizeInBytes(), 1);
 
         // Check toBytes and fromBytes.
-        Buffer buf = ByteBuffer.wrap(stringType.toBytes());
+        Buffer buf = ByteBuf.wrap(stringType.toBytes());
         assertEquals(stringType, Type.fromBytes(buf));
 
         // Check equality.
@@ -101,7 +101,7 @@ public class TestType {
         assertEquals(stringType.getSizeInBytes(), 2);
 
         // Check toBytes and fromBytes.
-        Buffer buf = ByteBuffer.wrap(stringType.toBytes());
+        Buffer buf = ByteBuf.wrap(stringType.toBytes());
         assertEquals(stringType, Type.fromBytes(buf));
 
         // Check equality.

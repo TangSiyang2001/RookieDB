@@ -2,7 +2,7 @@ package edu.berkeley.cs186.database.databox;
 
 import edu.berkeley.cs186.database.categories.Proj99Tests;
 import edu.berkeley.cs186.database.categories.SystemTests;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -45,7 +45,7 @@ public class TestLongDataBox {
         for (long i = -10L; i < 10L; ++i) {
             LongDataBox d = new LongDataBox(i);
             byte[] bytes = d.toBytes();
-            assertEquals(d, DataBox.fromBytes(ByteBuffer.wrap(bytes), Type.longType()));
+            assertEquals(d, DataBox.fromBytes(ByteBuf.wrap(bytes), Type.longType()));
         }
     }
 

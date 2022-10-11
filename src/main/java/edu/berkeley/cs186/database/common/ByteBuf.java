@@ -1,72 +1,73 @@
 package edu.berkeley.cs186.database.common;
 
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
  * Wrapper around java.nio.ByteBuffer to implement our Buffer interface.
- *
+ * <p>
  * Buffers are used to store and sequences of bytes, for example when we want
  * to serialize information into a byte sequence that can be stored on disk
  * and deserialize the sequence back into a Java object. Put methods will return
  * the buffer itself allowing you to chain together calls to put. For example,
  * calling:
- *
+ * <p>
  * ByteBuffer b = ByteBuffer.allocate(6);
  * // Buffer contents: empty
  * b.putChar('c').putChar('s').putInt(186);
  * // Buffer contents: |0x63, 0x73, 0x00, 0x00, 0x00, 0xBA|
- *
+ * <p>
  * Calling get will deserialize bytes from the beginning of the buffer (or the
  * specified index) and move the beginning of the buffer to the next unread
  * byte. Reusing the buffer from above:
- *
+ * <p>
  * char char1 = b.getChar(); // char1 = 'c'
  * // Buffer contents: |0x73, 0x00, 0x00, 0x00, 0xBA|
  * char char2 = b.getChar(): // char2 = 's'
  * // Buffer contents: |0x00, 0x00, 0x00, 0xBA|
  * int num = b.getInt(): // num = 186
  * // Buffer contents: empty
- *
+ * <p>
  * The buffer has no way of knowing what the original data types were, so
  * its important that you deserialize the contents in the same way as it was
  * serialized. For example, calling b.getInt() immediately would have attempted
  * to read the first 4 bytes (0x63, 0x73, 0x00, 0x00) in as an integer, despite
  * the first two bytes being part of characters, and not an integer.
- *
+ * <p>
  * In general you'll want to call your get operations in the same order as the
  * put operations took place.
  */
-public class ByteBuffer implements Buffer {
-    private java.nio.ByteBuffer buf;
+public class ByteBuf implements Buffer {
+    private final ByteBuffer buf;
 
-    private ByteBuffer(java.nio.ByteBuffer buf) {
+    private ByteBuf(java.nio.ByteBuffer buf) {
         this.buf = buf;
     }
 
     public static Buffer allocateDirect(int capacity) {
-        return new ByteBuffer(java.nio.ByteBuffer.allocateDirect(capacity));
+        return new ByteBuf(java.nio.ByteBuffer.allocateDirect(capacity));
     }
 
     public static Buffer allocate(int capacity) {
-        return new ByteBuffer(java.nio.ByteBuffer.allocate(capacity));
+        return new ByteBuf(java.nio.ByteBuffer.allocate(capacity));
     }
 
     public static Buffer wrap(byte[] array, int offset, int length) {
-        return new ByteBuffer(java.nio.ByteBuffer.wrap(array, offset, length));
+        return new ByteBuf(java.nio.ByteBuffer.wrap(array, offset, length));
     }
 
     public static Buffer wrap(byte[] array) {
-        return new ByteBuffer(java.nio.ByteBuffer.wrap(array));
+        return new ByteBuf(java.nio.ByteBuffer.wrap(array));
     }
 
     @Override
     public Buffer slice() {
-        return new ByteBuffer(buf.slice());
+        return new ByteBuf(buf.slice());
     }
 
     @Override
     public Buffer duplicate() {
-        return new ByteBuffer(buf.duplicate());
+        return new ByteBuf(buf.duplicate());
     }
 
     @Override

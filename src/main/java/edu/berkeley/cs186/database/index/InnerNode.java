@@ -345,7 +345,7 @@ class InnerNode extends BPlusNode {
         Buffer buf = page.getBuffer();
 
         byte nodeType = buf.get();
-        assert(nodeType == (byte) 0);
+        assert nodeType == NodeType.INNER.getType();
 
         List<DataBox> keys = new ArrayList<>();
         List<Long> children = new ArrayList<>();

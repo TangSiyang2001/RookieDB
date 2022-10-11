@@ -1,7 +1,7 @@
 package edu.berkeley.cs186.database.recovery.records;
 
 import edu.berkeley.cs186.database.common.Buffer;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import edu.berkeley.cs186.database.recovery.LogRecord;
 import edu.berkeley.cs186.database.recovery.LogType;
 
@@ -31,7 +31,7 @@ public class EndTransactionLogRecord extends LogRecord {
     @Override
     public byte[] toBytes() {
         byte[] b = new byte[1 + Long.BYTES + Long.BYTES];
-        ByteBuffer.wrap(b)
+        ByteBuf.wrap(b)
         .put((byte) getType().getValue())
         .putLong(transNum)
         .putLong(prevLSN);

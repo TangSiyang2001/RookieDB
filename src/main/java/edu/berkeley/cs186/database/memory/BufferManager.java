@@ -29,26 +29,32 @@ public class BufferManager implements AutoCloseable {
     // Effective page size available to users of buffer manager.
     public static final short EFFECTIVE_PAGE_SIZE = (short) (DiskSpaceManager.PAGE_SIZE - RESERVED_SPACE);
 
-    // Buffer frames
-    private Frame[] frames;
+    /**
+     * Buffer frames
+     */
+    private final Frame[] frames;
 
-    // Reference to the disk space manager underneath this buffer manager instance.
-    private DiskSpaceManager diskSpaceManager;
+    /**
+     * Reference to the disk space manager underneath this buffer manager instance.
+     */
+    private final DiskSpaceManager diskSpaceManager;
 
-    // Map of page number to frame index
-    private Map<Long, Integer> pageToFrame;
+    /**
+     * Map of page number to frame index
+     */
+    private final Map<Long, Integer> pageToFrame;
 
     // Lock on buffer manager
-    private ReentrantLock managerLock;
+    private final ReentrantLock managerLock;
 
     // Eviction policy
-    private EvictionPolicy evictionPolicy;
+    private final EvictionPolicy evictionPolicy;
 
     // Index of first free frame
     private int firstFreeIndex;
 
     // Recovery manager
-    private RecoveryManager recoveryManager;
+    private final RecoveryManager recoveryManager;
 
     // Count of number of I/Os
     private long numIOs = 0;
@@ -65,8 +71,8 @@ public class BufferManager implements AutoCloseable {
         private int index;
         private long pageNum;
         private boolean dirty;
-        private ReentrantLock frameLock;
-        private boolean logPage;
+        private final ReentrantLock frameLock;
+        private final boolean logPage;
 
         Frame(byte[] contents, int nextFree) {
             this(contents, ~nextFree, DiskSpaceManager.INVALID_PAGE_NUM);

@@ -122,7 +122,7 @@ public class HashFunc {
      * Converts the bytes from offset to offset + 4 of k into a Big Endian integer
      */
     static int bytesToInt(byte[] k, int offset) {
-        return ByteBuffer.wrap(k, offset, 4).getInt();
+        return ByteBuf.wrap(k, offset, 4).getInt();
     }
 
     private static class HashState {

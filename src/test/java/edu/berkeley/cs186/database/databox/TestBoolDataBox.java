@@ -2,7 +2,7 @@ package edu.berkeley.cs186.database.databox;
 
 import edu.berkeley.cs186.database.categories.Proj99Tests;
 import edu.berkeley.cs186.database.categories.SystemTests;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -47,7 +47,7 @@ public class TestBoolDataBox {
         for (boolean b : new boolean[] {true, false}) {
             BoolDataBox d = new BoolDataBox(b);
             byte[] bytes = d.toBytes();
-            assertEquals(d, DataBox.fromBytes(ByteBuffer.wrap(bytes), Type.boolType()));
+            assertEquals(d, DataBox.fromBytes(ByteBuf.wrap(bytes), Type.boolType()));
         }
     }
 

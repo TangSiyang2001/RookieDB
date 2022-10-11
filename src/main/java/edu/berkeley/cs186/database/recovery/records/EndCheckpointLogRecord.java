@@ -2,7 +2,7 @@ package edu.berkeley.cs186.database.recovery.records;
 
 import edu.berkeley.cs186.database.Transaction;
 import edu.berkeley.cs186.database.common.Buffer;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import edu.berkeley.cs186.database.common.Pair;
 import edu.berkeley.cs186.database.io.DiskSpaceManager;
 import edu.berkeley.cs186.database.recovery.LogRecord;
@@ -38,7 +38,7 @@ public class EndCheckpointLogRecord extends LogRecord {
     public byte[] toBytes() {
         int recordSize = getRecordSize(dirtyPageTable.size(), transactionTable.size());
         byte[] b = new byte[recordSize];
-        Buffer buf = ByteBuffer.wrap(b)
+        Buffer buf = ByteBuf.wrap(b)
                      .put((byte) getType().getValue())
                      .putShort((short) dirtyPageTable.size())
                      .putShort((short) transactionTable.size());

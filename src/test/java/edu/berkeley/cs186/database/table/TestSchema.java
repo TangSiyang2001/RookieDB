@@ -3,7 +3,7 @@ package edu.berkeley.cs186.database.table;
 import edu.berkeley.cs186.database.DatabaseException;
 import edu.berkeley.cs186.database.categories.Proj99Tests;
 import edu.berkeley.cs186.database.categories.SystemTests;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import edu.berkeley.cs186.database.databox.Type;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -106,7 +106,7 @@ public class TestSchema {
         };
 
         for (Schema schema : schemas) {
-            assertEquals(schema, Schema.fromBytes(ByteBuffer.wrap(schema.toBytes())));
+            assertEquals(schema, Schema.fromBytes(ByteBuf.wrap(schema.toBytes())));
         }
     }
 

@@ -1,7 +1,7 @@
 package edu.berkeley.cs186.database.table;
 
 import edu.berkeley.cs186.database.common.Buffer;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import edu.berkeley.cs186.database.common.iterator.BacktrackingIterable;
 import edu.berkeley.cs186.database.common.iterator.BacktrackingIterator;
 import edu.berkeley.cs186.database.common.iterator.ConcatBacktrackingIterator;
@@ -254,7 +254,7 @@ public class PageDirectory implements BacktrackingIterable<Page> {
                 Buffer pageBuffer = this.page.getBuffer();
                 if (pageBuffer.get() != (byte) 1) {
                     byte[] buf = new byte[BufferManager.EFFECTIVE_PAGE_SIZE];
-                    Buffer b = ByteBuffer.wrap(buf);
+                    Buffer b = ByteBuf.wrap(buf);
                     // invalid page, initialize empty header page
                     if (firstHeader) {
                         pageDirectoryId = new Random().nextInt();

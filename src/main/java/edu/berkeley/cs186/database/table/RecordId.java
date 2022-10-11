@@ -20,6 +20,15 @@ public class RecordId implements Comparable<RecordId> {
         this.entryNum = entryNum;
     }
 
+    public static int getSizeInBytes() {
+        // See toBytes.
+        return Long.BYTES + Short.BYTES;
+    }
+
+    public static RecordId fromBytes(Buffer buf) {
+        return new RecordId(buf.getLong(), buf.getShort());
+    }
+
     public long getPageNum() {
         return this.pageNum;
     }
@@ -28,22 +37,13 @@ public class RecordId implements Comparable<RecordId> {
         return this.entryNum;
     }
 
-    public static int getSizeInBytes() {
-        // See toBytes.
-        return Long.BYTES + Short.BYTES;
-    }
-
     public byte[] toBytes() {
         // A RecordId is serialized as its 8-byte page number followed by its
         // 2-byte short.
         return ByteBuffer.allocate(getSizeInBytes())
-               .putLong(pageNum)
-               .putShort(entryNum)
-               .array();
-    }
-
-    public static RecordId fromBytes(Buffer buf) {
-        return new RecordId(buf.getLong(), buf.getShort());
+                .putLong(pageNum)
+                .putShort(entryNum)
+                .array();
     }
 
     @Override

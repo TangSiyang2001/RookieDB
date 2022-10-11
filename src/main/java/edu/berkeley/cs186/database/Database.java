@@ -4,7 +4,7 @@ import edu.berkeley.cs186.database.cli.parser.ASTExecutableStatement;
 import edu.berkeley.cs186.database.cli.parser.ParseException;
 import edu.berkeley.cs186.database.cli.parser.RookieParser;
 import edu.berkeley.cs186.database.cli.visitor.ExecutableStatementVisitor;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import edu.berkeley.cs186.database.common.Pair;
 import edu.berkeley.cs186.database.common.PredicateOperator;
 import edu.berkeley.cs186.database.common.iterator.BacktrackingIterator;
@@ -383,7 +383,7 @@ public class Database implements AutoCloseable {
             tableName = record.getValue(0).getString();
             partNum = record.getValue(1).getInt();
             pageNum = record.getValue(2).getLong();
-            schema = Schema.fromBytes(ByteBuffer.wrap(record.getValue(3).toBytes()));
+            schema = Schema.fromBytes(ByteBuf.wrap(record.getValue(3).toBytes()));
         }
 
         Record toRecord() {

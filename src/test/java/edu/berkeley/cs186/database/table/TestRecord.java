@@ -2,7 +2,7 @@ package edu.berkeley.cs186.database.table;
 
 import edu.berkeley.cs186.database.categories.Proj99Tests;
 import edu.berkeley.cs186.database.categories.SystemTests;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import edu.berkeley.cs186.database.databox.Type;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -38,7 +38,7 @@ public class TestRecord {
         for (int i = 0; i < schemas.length; ++i) {
             Schema s = schemas[i];
             Record r = records[i];
-            assertEquals(r, Record.fromBytes(ByteBuffer.wrap(r.toBytes(s)), s));
+            assertEquals(r, Record.fromBytes(ByteBuf.wrap(r.toBytes(s)), s));
         }
     }
 

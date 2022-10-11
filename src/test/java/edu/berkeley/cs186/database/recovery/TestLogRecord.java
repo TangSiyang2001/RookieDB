@@ -2,7 +2,7 @@ package edu.berkeley.cs186.database.recovery;
 
 import edu.berkeley.cs186.database.Transaction;
 import edu.berkeley.cs186.database.categories.SystemTests;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import edu.berkeley.cs186.database.common.Pair;
 import edu.berkeley.cs186.database.memory.BufferManager;
 import edu.berkeley.cs186.database.recovery.records.*;
@@ -17,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 @Category(SystemTests.class)
 public class TestLogRecord {
     private void checkSerialize(LogRecord record) {
-        assertEquals(record, LogRecord.fromBytes(ByteBuffer.wrap(record.toBytes())).orElse(null));
+        assertEquals(record, LogRecord.fromBytes(ByteBuf.wrap(record.toBytes())).orElse(null));
     }
 
     @Test

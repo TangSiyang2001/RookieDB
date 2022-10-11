@@ -2,7 +2,7 @@ package edu.berkeley.cs186.database.table;
 
 import edu.berkeley.cs186.database.categories.Proj99Tests;
 import edu.berkeley.cs186.database.categories.SystemTests;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -20,7 +20,7 @@ public class TestRecordId {
         for (int i = 0; i < 10; ++i) {
             for (short j = 0; j < 10; ++j) {
                 RecordId rid = new RecordId(i, j);
-                assertEquals(rid, RecordId.fromBytes(ByteBuffer.wrap(rid.toBytes())));
+                assertEquals(rid, RecordId.fromBytes(ByteBuf.wrap(rid.toBytes())));
             }
         }
     }

@@ -2,7 +2,7 @@ package edu.berkeley.cs186.database.databox;
 
 import edu.berkeley.cs186.database.categories.Proj99Tests;
 import edu.berkeley.cs186.database.categories.SystemTests;
-import edu.berkeley.cs186.database.common.ByteBuffer;
+import edu.berkeley.cs186.database.common.ByteBuf;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -54,7 +54,7 @@ public class TestStringDataBox {
         for (String s : new String[] {"foo", "bar", "baz"}) {
             StringDataBox d = new StringDataBox(s, 3);
             byte[] bytes = d.toBytes();
-            assertEquals(d, DataBox.fromBytes(ByteBuffer.wrap(bytes), Type.stringType(3)));
+            assertEquals(d, DataBox.fromBytes(ByteBuf.wrap(bytes), Type.stringType(3)));
         }
     }
 
