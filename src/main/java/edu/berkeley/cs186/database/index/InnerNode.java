@@ -200,10 +200,17 @@ class InnerNode extends BPlusNode {
     // See BPlusNode.getLeftmostLeaf.
     @Override
     public LeafNode getLeftmostLeaf() {
-        assert (children.size() > 0);
+        assert (!children.isEmpty());
         // TODO(proj2): implement
-
-        return null;
+        //use iteration instead of recursion
+        BPlusNode currentNode = this;
+        while (currentNode instanceof InnerNode){
+            currentNode = ((InnerNode) currentNode).getChild(0);
+        }
+        if(currentNode instanceof LeafNode){
+            return (LeafNode) currentNode;
+        }
+        throw new IllegalStateException("The tree has structural error");
     }
 
     // See BPlusNode.put.
