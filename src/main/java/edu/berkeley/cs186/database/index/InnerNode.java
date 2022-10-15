@@ -207,10 +207,7 @@ class InnerNode extends BPlusNode {
         while (currentNode instanceof InnerNode){
             currentNode = ((InnerNode) currentNode).getChild(0);
         }
-        if(currentNode instanceof LeafNode){
-            return (LeafNode) currentNode;
-        }
-        throw new IllegalStateException("The tree has structural error");
+        return (LeafNode) currentNode;
     }
 
     // See BPlusNode.put.
