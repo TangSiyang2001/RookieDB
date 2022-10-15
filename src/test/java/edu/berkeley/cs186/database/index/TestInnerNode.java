@@ -1,11 +1,9 @@
 package edu.berkeley.cs186.database.index;
 
 import edu.berkeley.cs186.database.TimeoutScaling;
-import edu.berkeley.cs186.database.categories.HiddenTests;
 import edu.berkeley.cs186.database.categories.Proj2Tests;
 import edu.berkeley.cs186.database.categories.PublicTests;
 import edu.berkeley.cs186.database.categories.SystemTests;
-import edu.berkeley.cs186.database.common.Pair;
 import edu.berkeley.cs186.database.concurrency.DummyLockContext;
 import edu.berkeley.cs186.database.concurrency.LockContext;
 import edu.berkeley.cs186.database.databox.DataBox;
@@ -28,18 +26,18 @@ import org.junit.rules.Timeout;
 
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @Category(Proj2Tests.class)
 public class TestInnerNode {
-    private BufferManager bufferManager;
-    private BPlusTreeMetadata metadata;
-    private LockContext treeContext;
-
     // 1 second max per method tested.
     @Rule
     public TestRule globalTimeout = new DisableOnDebug(Timeout.millis((long) (
-                1000 * TimeoutScaling.factor)));
+            1000 * TimeoutScaling.factor)));
+    private BufferManager bufferManager;
+    private BPlusTreeMetadata metadata;
+    private LockContext treeContext;
 
     // inner, leaf0, leaf1, and leaf2 collectively form the following B+ tree:
     //
@@ -87,7 +85,6 @@ public class TestInnerNode {
     // not affect our the in-memory values of our members. Also note that all
     // of these members are initialized by resetMembers before every test case
     // is run.
-
     private List<DataBox> innerKeys;
     private List<Long> innerChildren;
     private InnerNode inner;
@@ -180,7 +177,7 @@ public class TestInnerNode {
 
     private void setBPlusTreeMetadata(Type keySchema, int order) {
         this.metadata = new BPlusTreeMetadata("test", "col", keySchema, order,
-                                              0, DiskSpaceManager.INVALID_PAGE_NUM, -1);
+                0, DiskSpaceManager.INVALID_PAGE_NUM, -1);
     }
 
     // See comment above.

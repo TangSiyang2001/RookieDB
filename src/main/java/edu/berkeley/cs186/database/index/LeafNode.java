@@ -48,53 +48,53 @@ class LeafNode extends BPlusNode {
      * Note the following subtlety. keys and rids are in-memory caches of the
      * keys and record ids stored on disk. Thus, consider what happens when you
      * create two LeafNode objects that point to the same page:
-     *   BPlusTreeMetadata meta = ...;
-     *   int pageNum = ...;
-     *   LockContext treeContext = new DummyLockContext();
-     *   LeafNode leaf0 = LeafNode.fromBytes(meta, bufferManager, treeContext, pageNum);
-     *   LeafNode leaf1 = LeafNode.fromBytes(meta, bufferManager, treeContext, pageNum);
+     * BPlusTreeMetadata meta = ...;
+     * int pageNum = ...;
+     * LockContext treeContext = new DummyLockContext();
+     * LeafNode leaf0 = LeafNode.fromBytes(meta, bufferManager, treeContext, pageNum);
+     * LeafNode leaf1 = LeafNode.fromBytes(meta, bufferManager, treeContext, pageNum);
      * This scenario looks like this:
-     *   HEAP                        | DISK
-     *   ===============================================================
-     *   leaf0                       | page 42
-     *   +-------------------------+ | +-------+-------+-------+-------+
-     *   | keys = [k0, k1, k2]     | | | k0:r0 | k1:r1 | k2:r2 |       |
-     *   | rids = [r0, r1, r2]     | | +-------+-------+-------+-------+
-     *   | pageNum = 42            | |
-     *   +-------------------------+ |
-     *                               |
-     *   leaf1                       |
-     *   +-------------------------+ |
-     *   | keys = [k0, k1, k2]     | |
-     *   | rids = [r0, r1, r2]     | |
-     *   | pageNum = 42            | |
-     *   +-------------------------+ |
-     *                               |
+     * HEAP                        | DISK
+     * ===============================================================
+     * leaf0                       | page 42
+     * +-------------------------+ | +-------+-------+-------+-------+
+     * | keys = [k0, k1, k2]     | | | k0:r0 | k1:r1 | k2:r2 |       |
+     * | rids = [r0, r1, r2]     | | +-------+-------+-------+-------+
+     * | pageNum = 42            | |
+     * +-------------------------+ |
+     * |
+     * leaf1                       |
+     * +-------------------------+ |
+     * | keys = [k0, k1, k2]     | |
+     * | rids = [r0, r1, r2]     | |
+     * | pageNum = 42            | |
+     * +-------------------------+ |
+     * |
      * Now imagine we perform on operation on leaf0 like leaf0.put(k3, r3). The
      * in-memory values of leaf0 will be updated and they will be synced to disk.
      * But, the in-memory values of leaf1 will not be updated. That will look
      * like this:
-     *   HEAP                        | DISK
-     *   ===============================================================
-     *   leaf0                       | page 42
-     *   +-------------------------+ | +-------+-------+-------+-------+
-     *   | keys = [k0, k1, k2, k3] | | | k0:r0 | k1:r1 | k2:r2 | k3:r3 |
-     *   | rids = [r0, r1, r2, r3] | | +-------+-------+-------+-------+
-     *   | pageNum = 42            | |
-     *   +-------------------------+ |
-     *                               |
-     *   leaf1                       |
-     *   +-------------------------+ |
-     *   | keys = [k0, k1, k2]     | |
-     *   | rids = [r0, r1, r2]     | |
-     *   | pageNum = 42            | |
-     *   +-------------------------+ |
-     *                               |
+     * HEAP                        | DISK
+     * ===============================================================
+     * leaf0                       | page 42
+     * +-------------------------+ | +-------+-------+-------+-------+
+     * | keys = [k0, k1, k2, k3] | | | k0:r0 | k1:r1 | k2:r2 | k3:r3 |
+     * | rids = [r0, r1, r2, r3] | | +-------+-------+-------+-------+
+     * | pageNum = 42            | |
+     * +-------------------------+ |
+     * |
+     * leaf1                       |
+     * +-------------------------+ |
+     * | keys = [k0, k1, k2]     | |
+     * | rids = [r0, r1, r2]     | |
+     * | pageNum = 42            | |
+     * +-------------------------+ |
+     * |
      * Make sure your code (or your tests) doesn't use stale in-memory cached
      * values of keys and rids.
      */
-    private final List<DataBox> keys;
-    private final List<RecordId> rids;
+    private List<DataBox> keys;
+    private List<RecordId> rids;
 
     // If this leaf is the rightmost leaf, then rightSibling is Optional.empty().
     // Otherwise, rightSibling is Optional.of(n) where n is the page number of
@@ -204,6 +204,7 @@ class LeafNode extends BPlusNode {
 
     /**
      * Core API
+     *
      * @param key key
      * @return leafNode corresponding to the key
      * @see BPlusNode#get(DataBox)
@@ -215,8 +216,8 @@ class LeafNode extends BPlusNode {
     }
 
     /**
-     * @see BPlusNode#getLeftmostLeaf()
      * @return LeftmostLeaf
+     * @see BPlusNode#getLeftmostLeaf()
      */
     @Override
     public LeafNode getLeftmostLeaf() {
@@ -224,12 +225,63 @@ class LeafNode extends BPlusNode {
         return this;
     }
 
-    // See BPlusNode.put.
+    /**
+     * @param key key
+     * @param rid recordId
+     * @return pair of split node info if it needs to be split
+     * @see BPlusNode#put(DataBox, RecordId)
+     */
     @Override
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
         // TODO(proj2): implement
+        if(keys.contains(key)){
+            throw new BPlusTreeException(String.format("Duplicated key %s is inserted.",key.toString()));
+        }
+        final int index = InnerNode.numLessThan(key, keys);
 
-        return Optional.empty();
+        //get d of the B+ tree
+        final int order = metadata.getOrder();
+        //rids and keys are aligned
+        keys.add(index, key);
+        rids.add(index, rid);
+        //key size should be less than 2 * order(2*d)
+        final int keySizeLimit = 2 * order;
+        final int keysSize = keys.size();
+        if (keysSize <= keySizeLimit) {
+            //non overflow
+            sync();
+            return Optional.empty();
+        }
+        if (keysSize > keySizeLimit + 1) {
+            throw new BPlusTreeException("Overflow when size is larger than 2d+1");
+        }
+        return doSplit(order);
+    }
+
+    @Override
+    protected Optional<Pair<DataBox, Long>> doSplit(int splitIndex) {
+        final int currentSize = keys.size();
+        final List<DataBox> leftKeys = keys.subList(0, splitIndex);
+        final List<DataBox> rightKeys = keys.subList(splitIndex, currentSize);
+        final List<RecordId> leftRids = rids.subList(0, splitIndex);
+        final List<RecordId> rightRids = rids.subList(splitIndex, currentSize);
+
+        final LeafNode rightNode = new LeafNode(
+                this.metadata,
+                this.bufferManager,
+                rightKeys,
+                rightRids,
+                this.rightSibling,
+                treeContext);
+
+        final long rightNodePageNum = rightNode.getPage().getPageNum();
+        //update
+        keys = leftKeys;
+        rids = leftRids;
+        rightSibling = Optional.of(rightNodePageNum);
+        sync();
+        //push up
+        return Optional.of(new Pair<>(rightKeys.get(0), rightNodePageNum));
     }
 
     // Iterators ///////////////////////////////////////////////////////////////

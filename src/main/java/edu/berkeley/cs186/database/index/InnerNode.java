@@ -112,6 +112,7 @@ class InnerNode extends BPlusNode {
      * Given a list ys sorted in ascending order, numLessThanEqual(x, ys) returns
      * the number of elements in ys that are less than or equal to x. For
      * example,
+     * （即返回ys中小于等于x的元素个数）
      * <p>
      * numLessThanEqual(0, Arrays.asList(1, 2, 3, 4, 5)) == 0
      * numLessThanEqual(1, Arrays.asList(1, 2, 3, 4, 5)) == 1
@@ -184,9 +185,10 @@ class InnerNode extends BPlusNode {
 
     /**
      * Core API
-     * @see BPlusNode#get(DataBox).
+     *
      * @param key key
      * @return the leafNode corresponding to the key
+     * @see BPlusNode#get(DataBox).
      */
     @Override
     public LeafNode get(DataBox key) {
@@ -204,7 +206,7 @@ class InnerNode extends BPlusNode {
         // TODO(proj2): implement
         //use iteration instead of recursion
         BPlusNode currentNode = this;
-        while (currentNode instanceof InnerNode){
+        while (currentNode instanceof InnerNode) {
             currentNode = ((InnerNode) currentNode).getChild(0);
         }
         return (LeafNode) currentNode;
@@ -214,8 +216,61 @@ class InnerNode extends BPlusNode {
     @Override
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
         // TODO(proj2): implement
+        final int index = numLessThanEqual(key, keys);
+        final BPlusNode child = getChild(index);
+        final Optional<Pair<DataBox, Long>> pushedUpInfo = child.put(key, rid);
+        if (!pushedUpInfo.isPresent()) {
+            //non overflow
+            return Optional.empty();
+        }
+        return processChildOverflow(pushedUpInfo.get(), index);
+    }
 
-        return Optional.empty();
+    private Optional<Pair<DataBox, Long>> processChildOverflow(Pair<DataBox, Long> pushedUpPair, int index) {
+        //manage child's overflow
+        final int keysSize = keys.size();
+        final int order = metadata.getOrder();
+        final int limit = 2 * order;
+
+        final DataBox pushUpKey = pushedUpPair.getFirst();
+        final Long pushedUpNewNodePageNum = pushedUpPair.getSecond();
+        keys.add(index, pushUpKey);
+        //right pointer index is 1 more than key index
+        children.add(index + 1, pushedUpNewNodePageNum);
+        if (keysSize > limit + 1) {
+            throw new BPlusTreeException("Overflow when size is larger than 2d+1");
+        }
+        if (keysSize <= limit) {
+            sync();
+            return Optional.empty();
+        }
+        return doSplit(index);
+    }
+
+    @Override
+    protected Optional<Pair<DataBox, Long>> doSplit(int index) {
+        final DataBox splitKey = keys.get(index);
+        final List<DataBox> leftKeys = keys.subList(0, index);
+        final List<DataBox> rightKeys = keys.subList(index + 1, keys.size());
+
+        final List<Long> leftChildren = children.subList(0, index + 1);
+        final List<Long> rightChildren = children.subList(index + 2, children.size());
+
+        //when we construct a InnerNode,it is synced to disk.See in InnerNode constructor.
+        final InnerNode innerNode = new InnerNode(
+                this.metadata,
+                this.bufferManager,
+                rightKeys,
+                rightChildren,
+                this.treeContext
+        );
+
+        //update
+        keys = leftKeys;
+        children = leftChildren;
+        sync();
+        //push up
+        return Optional.of(new Pair<>(splitKey,innerNode.getPage().getPageNum()));
     }
 
     // See BPlusNode.bulkLoad.

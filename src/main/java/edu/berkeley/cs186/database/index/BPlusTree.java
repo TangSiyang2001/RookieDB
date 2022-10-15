@@ -153,7 +153,7 @@ public class BPlusTree {
      * tree.get(new IntDataBox(100)); // Optional.empty()
      */
     public Optional<RecordId> get(DataBox key) {
-        typecheck(key);
+        typeCheck(key);
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
@@ -169,7 +169,7 @@ public class BPlusTree {
      * over rid.
      */
     public Iterator<RecordId> scanEqual(DataBox key) {
-        typecheck(key);
+        typeCheck(key);
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
@@ -241,7 +241,7 @@ public class BPlusTree {
      * memory will receive 0 points.
      */
     public Iterator<RecordId> scanGreaterEqual(DataBox key) {
-        typecheck(key);
+        typeCheck(key);
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
@@ -260,7 +260,7 @@ public class BPlusTree {
      * tree.put(key, rid); // BPlusTreeException :(
      */
     public void put(DataBox key, RecordId rid) {
-        typecheck(key);
+        typeCheck(key);
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
@@ -268,8 +268,23 @@ public class BPlusTree {
         // Note: You should NOT update the root variable directly.
         // Use the provided updateRoot() helper method to change
         // the tree's root if the old root splits.
-
-        return;
+        final Optional<Pair<DataBox, Long>> pushedUpInfo = root.put(key, rid);
+        if (!pushedUpInfo.isPresent()) {
+            //non overflow
+            return;
+        }
+        //update the root node
+        final Pair<DataBox, Long> pushedUpPair = pushedUpInfo.get();
+        final DataBox pushedUpKey = pushedUpPair.getFirst();
+        final Long pushedUpPageNum = pushedUpPair.getSecond();
+        final List<DataBox> newKeys = new ArrayList<>();
+        final ArrayList<Long> newChildren = new ArrayList<>();
+        newKeys.add(pushedUpKey);
+        //update left and right pointer
+        newChildren.add(root.getPage().getPageNum());
+        newChildren.add(pushedUpPageNum);
+        final InnerNode newRootNode = new InnerNode(this.metadata, this.bufferManager, newKeys, newChildren, this.lockContext);
+        updateRoot(newRootNode);
     }
 
     /**
@@ -315,7 +330,7 @@ public class BPlusTree {
      * tree.get(key); // Optional.empty()
      */
     public void remove(DataBox key) {
-        typecheck(key);
+        typeCheck(key);
         // TODO(proj4_integration): Update the following line
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
@@ -414,7 +429,7 @@ public class BPlusTree {
         }
     }
 
-    private void typecheck(DataBox key) {
+    private void typeCheck(DataBox key) {
         Type t = metadata.getKeySchema();
         if (!key.type().equals(t)) {
             String msg = String.format("DataBox %s is not of type %s", key, t);

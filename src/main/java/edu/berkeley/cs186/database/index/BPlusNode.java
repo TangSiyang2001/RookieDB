@@ -156,8 +156,19 @@ abstract class BPlusNode {
      * Our B+ trees do not support duplicate entries with the same key. If a
      * duplicate key is inserted into a leaf node, the tree is left unchanged
      * and a BPlusTreeException is raised.
+     *
+     * @param key key
+     * @param rid recordId
+     * @return pair of split node info if it needs to be split
      */
     public abstract Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid);
+
+    /**
+     * split the node if there is an overflow
+     * @param index splitIndex
+     * @return pair of split node info if it needs to be split
+     */
+    protected abstract Optional<Pair<DataBox, Long>> doSplit(int index);
 
     /**
      * n.bulkLoad(data, fillFactor) bulk loads pairs of (k, r) from data into
