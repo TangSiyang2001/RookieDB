@@ -234,8 +234,8 @@ class LeafNode extends BPlusNode {
     @Override
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
         // TODO(proj2): implement
-        if(keys.contains(key)){
-            throw new BPlusTreeException(String.format("Duplicated key %s is inserted.",key.toString()));
+        if (keys.contains(key)) {
+            throw new BPlusTreeException(String.format("Duplicated key %s is inserted.", key.toString()));
         }
         final int index = InnerNode.numLessThan(key, keys);
 
@@ -295,12 +295,18 @@ class LeafNode extends BPlusNode {
         return Optional.empty();
     }
 
-    // See BPlusNode.remove.
+    /**
+     * @param key key
+     * @see BPlusNode#remove(DataBox)
+     */
     @Override
     public void remove(DataBox key) {
         // TODO(proj2): implement
-
-        return;
+        if (keys.contains(key)) {
+            rids.remove(keys.indexOf(key));
+            keys.remove(key);
+            sync();
+        }
     }
 
     /**

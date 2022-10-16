@@ -270,7 +270,7 @@ class InnerNode extends BPlusNode {
         children = leftChildren;
         sync();
         //push up
-        return Optional.of(new Pair<>(splitKey,innerNode.getPage().getPageNum()));
+        return Optional.of(new Pair<>(splitKey, innerNode.getPage().getPageNum()));
     }
 
     // See BPlusNode.bulkLoad.
@@ -282,12 +282,14 @@ class InnerNode extends BPlusNode {
         return Optional.empty();
     }
 
-    // See BPlusNode.remove.
+    /**
+     * @param key key
+     * @see BPlusNode#remove(DataBox)
+     */
     @Override
     public void remove(DataBox key) {
         // TODO(proj2): implement
-
-        return;
+        get(key).remove(key);
     }
 
     // Helpers /////////////////////////////////////////////////////////////////
