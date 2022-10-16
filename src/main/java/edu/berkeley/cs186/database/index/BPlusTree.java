@@ -274,6 +274,10 @@ public class BPlusTree {
         }
         //update the root node
         final Pair<DataBox, Long> pushedUpPair = pushedUpInfo.get();
+        updateRootNode(pushedUpPair);
+    }
+
+    private void updateRootNode(Pair<DataBox, Long> pushedUpPair) {
         final DataBox pushedUpKey = pushedUpPair.getFirst();
         final Long pushedUpPageNum = pushedUpPair.getSecond();
         final List<DataBox> newKeys = new ArrayList<>();
@@ -311,8 +315,14 @@ public class BPlusTree {
         // Note: You should NOT update the root variable directly.
         // Use the provided updateRoot() helper method to change
         // the tree's root if the old root splits.
-
-        return;
+        final LeafNode leftmostLeaf = this.root.getLeftmostLeaf();
+        if (leftmostLeaf != root || leftmostLeaf.scanAll().hasNext()) {
+            throw new BPlusTreeException("Could not bulk load a non empty tree.");
+        }
+        while (data.hasNext()) {
+            final Optional<Pair<DataBox, Long>> pushedUpInfo = root.bulkLoad(data, fillFactor);
+            pushedUpInfo.ifPresent(this::updateRootNode);
+        }
     }
 
     // Helpers /////////////////////////////////////////////////////////////////

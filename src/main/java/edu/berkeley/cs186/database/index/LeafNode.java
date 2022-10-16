@@ -286,13 +286,52 @@ class LeafNode extends BPlusNode {
 
     // Iterators ///////////////////////////////////////////////////////////////
 
-    // See BPlusNode.bulkLoad.
+    /**
+     * @see BPlusNode#bulkLoad(Iterator, float)
+     */
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
                                                   float fillFactor) {
         // TODO(proj2): implement
+        if (fillFactor <= 0) {
+            throw new IllegalArgumentException("FillFactor should be in (0,1].");
+        }
+        //do populate
+        //上取整
+        final int order = metadata.getOrder();
+        final int limit = (int) Math.ceil(2 * order * fillFactor);
+        for (int i = keys.size(); i < limit && data.hasNext(); i++) {
+            final Pair<DataBox, RecordId> pair = data.next();
+            keys.add(pair.getFirst());
+            rids.add(pair.getSecond());
+        }
 
-        return Optional.empty();
+        if (!data.hasNext()) {
+            //perfectly filled
+            sync();
+            return Optional.empty();
+        }
+
+        //split
+        final Pair<DataBox, RecordId> rightSiblingInfo = data.next();
+        final DataBox key = rightSiblingInfo.getFirst();
+        final RecordId recordId = rightSiblingInfo.getSecond();
+
+        final List<DataBox> rightSiblingKeys = new ArrayList<>();
+        final List<RecordId> rightSiblingRids = new ArrayList<>();
+        //just put one pair of data into the right sibling,if iterator has next,keep them for inner node to process
+        rightSiblingKeys.add(key);
+        rightSiblingRids.add(recordId);
+        final LeafNode rightLeafNode = new LeafNode(
+                this.metadata,
+                this.bufferManager,
+                rightSiblingKeys,
+                rightSiblingRids,
+                this.rightSibling,
+                this.treeContext
+        );
+        sync();
+        return Optional.of(new Pair<>(key, rightLeafNode.getPage().getPageNum()));
     }
 
     /**

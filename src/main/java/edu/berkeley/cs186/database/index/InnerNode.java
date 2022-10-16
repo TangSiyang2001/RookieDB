@@ -273,13 +273,34 @@ class InnerNode extends BPlusNode {
         return Optional.of(new Pair<>(splitKey, innerNode.getPage().getPageNum()));
     }
 
-    // See BPlusNode.bulkLoad.
+    /**
+     * @see BPlusNode#bulkLoad(Iterator, float)
+     */
     @Override
     public Optional<Pair<DataBox, Long>> bulkLoad(Iterator<Pair<DataBox, RecordId>> data,
                                                   float fillFactor) {
         // TODO(proj2): implement
-
-        return Optional.empty();
+        //inner nodes are independent from fillFactor
+        final int order = metadata.getOrder();
+        final int limit = 2 * order;
+        while (keys.size() <= limit && data.hasNext()) {
+            //try to load into the current right most child,it may not be filled
+            final BPlusNode rightMostChild = getChild(children.size() - 1);
+            final Optional<Pair<DataBox, Long>> pushedUpInfo = rightMostChild.bulkLoad(data, fillFactor);
+            if (pushedUpInfo.isPresent()) {
+                final Pair<DataBox, Long> pushedUpData = pushedUpInfo.get();
+                final DataBox key = pushedUpData.getFirst();
+                final Long pageNum = pushedUpData.getSecond();
+                keys.add(key);
+                children.add(pageNum);
+            }
+        }
+        if (keys.size() <= limit) {
+            sync();
+            return Optional.empty();
+        }
+        //split with doSplit
+        return doSplit(order);
     }
 
     /**
