@@ -350,6 +350,13 @@ class LeafNode extends BPlusNode {
         }
 
         long pageNum = rightSibling.get();
+        if (pageNum < 0) {
+            /*TODO(proj2):
+             *  If the right sibling does not exists,the page num will be -1,we'd better do prejudgment here.
+             *  This part is not in original proj2 scope.
+             */
+            return Optional.empty();
+        }
         return Optional.of(LeafNode.fromBytes(metadata, bufferManager, treeContext, pageNum));
     }
 

@@ -213,8 +213,7 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): Return a BPlusTreeIterator.
-
-        return Collections.emptyIterator();
+        return new BPlusTreeIterator();
     }
 
     /**
@@ -246,8 +245,8 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): Return a BPlusTreeIterator.
-
-        return Collections.emptyIterator();
+        final LeafNode leafNode = root.get(key);
+        return new BPlusTreeIterator(leafNode, leafNode.scanGreaterEqual(key));
     }
 
     /**
@@ -379,15 +378,12 @@ public class BPlusTree {
      * string with the ".pdf" extension included at the end (ex "tree.pdf").
      */
     public void toDotPDFFile(String filename) {
-        String tree_string = toDot();
-
+        String treeString = toDot();
+        java.io.File file = new java.io.File("tree.dot");
         // Writing to intermediate dot file
-        try {
-            java.io.File file = new java.io.File("tree.dot");
-            FileWriter fileWriter = new FileWriter(file);
-            fileWriter.write(tree_string);
+        try (FileWriter fileWriter = new FileWriter(file)) {
+            fileWriter.write(treeString);
             fileWriter.flush();
-            fileWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -440,18 +436,39 @@ public class BPlusTree {
     private class BPlusTreeIterator implements Iterator<RecordId> {
         // TODO(proj2): Add whatever fields and constructors you want here.
 
+        private Iterator<RecordId> currentIterator;
+
+        private LeafNode currentLeafNode;
+
+        public BPlusTreeIterator() {
+            this(root.getLeftmostLeaf(), null);
+        }
+
+        public BPlusTreeIterator(LeafNode leafNode, Iterator<RecordId> currentIterator) {
+            this.currentLeafNode = leafNode;
+            this.currentIterator = currentIterator == null ? currentLeafNode.scanAll() : currentIterator;
+        }
+
         @Override
         public boolean hasNext() {
             // TODO(proj2): implement
-
-            return false;
+            //current node has next or right sibling has next
+            return currentIterator.hasNext() || currentLeafNode.getRightSibling().isPresent();
         }
 
         @Override
         public RecordId next() {
             // TODO(proj2): implement
-
-            throw new NoSuchElementException();
+            if (currentIterator.hasNext()) {
+                return currentIterator.next();
+            }
+            final Optional<LeafNode> rightSibling = currentLeafNode.getRightSibling();
+            if (rightSibling.isPresent()) {
+                currentLeafNode = rightSibling.get();
+                currentIterator = currentLeafNode.scanAll();
+                return next();
+            }
+            throw new NoSuchElementException("Right sibling is empty,use #hasNext to do prejudgment.");
         }
     }
 }

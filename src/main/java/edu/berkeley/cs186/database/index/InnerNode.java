@@ -228,7 +228,6 @@ class InnerNode extends BPlusNode {
 
     private Optional<Pair<DataBox, Long>> processChildOverflow(Pair<DataBox, Long> pushedUpPair, int index) {
         //manage child's overflow
-        final int keysSize = keys.size();
         final int order = metadata.getOrder();
         final int limit = 2 * order;
 
@@ -237,6 +236,7 @@ class InnerNode extends BPlusNode {
         keys.add(index, pushUpKey);
         //right pointer index is 1 more than key index
         children.add(index + 1, pushedUpNewNodePageNum);
+        final int keysSize = keys.size();
         if (keysSize > limit + 1) {
             throw new BPlusTreeException("Overflow when size is larger than 2d+1");
         }
@@ -254,7 +254,7 @@ class InnerNode extends BPlusNode {
         final List<DataBox> rightKeys = keys.subList(index + 1, keys.size());
 
         final List<Long> leftChildren = children.subList(0, index + 1);
-        final List<Long> rightChildren = children.subList(index + 2, children.size());
+        final List<Long> rightChildren = children.subList(index + 1, children.size());
 
         //when we construct a InnerNode,it is synced to disk.See in InnerNode constructor.
         final InnerNode innerNode = new InnerNode(
