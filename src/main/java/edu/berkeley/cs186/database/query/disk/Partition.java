@@ -15,10 +15,14 @@ import java.util.List;
  * minimize I/Os incurred.
  */
 public class Partition implements Iterable<Record> {
-    // The transaction this partition will be used within
-    private TransactionContext transaction;
-    // Under the hood we'll be storing all the records in a temporary table
-    private String tempTableName;
+    /**
+     * The transaction this partition will be used within
+     */
+    private final TransactionContext transaction;
+    /**
+     * Under the hood we'll be storing all the records in a temporary table
+     */
+    private final String tempTableName;
 
     public Partition(TransactionContext transaction, Schema s) {
         this.transaction = transaction;
@@ -40,7 +44,9 @@ public class Partition implements Iterable<Record> {
      * @param records the records to add
      */
     public void addAll(List<Record> records) {
-        for (Record record : records) this.add(record);
+        for (Record record : records) {
+            this.add(record);
+        }
     }
 
     /**

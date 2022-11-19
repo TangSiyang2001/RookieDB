@@ -130,18 +130,42 @@ public abstract class DataBox implements Comparable<DataBox> {
      *                                         // primitive we support
      */
     public static DataBox fromObject(Object o) {
-        if (o instanceof DataBox) return (DataBox) o;
-        if (o instanceof Integer) return new IntDataBox((Integer) o);
-        if (o instanceof String) return new StringDataBox((String) o);
-        if (o instanceof Boolean) return new BoolDataBox((Boolean) o);
-        if (o instanceof Long) return new LongDataBox((Long) o);
-        if (o instanceof Float) return new FloatDataBox((Float) o);
+        if (o instanceof DataBox) {
+            return (DataBox) o;
+        }
+        if (o instanceof Integer) {
+            return new IntDataBox((Integer) o);
+        }
+        if (o instanceof String) {
+            return new StringDataBox((String) o);
+        }
+        if (o instanceof Boolean) {
+            return new BoolDataBox((Boolean) o);
+        }
+        if (o instanceof Long) {
+            return new LongDataBox((Long) o);
+        }
+        if (o instanceof Float) {
+            return new FloatDataBox((Float) o);
+        }
         if (o instanceof Double) {
             // implicit cast
             double d = (Double) o;
             return new FloatDataBox((float) d);
         }
-        if (o instanceof byte[]) return new ByteArrayDataBox((byte[]) o, ((byte[]) o).length);
+        if (o instanceof byte[]) {
+            return new ByteArrayDataBox((byte[]) o, ((byte[]) o).length);
+        }
         throw new IllegalArgumentException("Object was not a supported data type");
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
     }
 }

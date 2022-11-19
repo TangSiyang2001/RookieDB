@@ -14,7 +14,8 @@ import edu.berkeley.cs186.database.table.Schema;
 import java.util.*;
 
 public class SHJOperator extends JoinOperator {
-    private int numBuffers;
+    private static final int MAX_PASSES = 5;
+    private final int numBuffers;
     private Run joinedRecords;
 
     /**
@@ -43,7 +44,9 @@ public class SHJOperator extends JoinOperator {
     }
 
     @Override
-    public boolean materialized() { return true; }
+    public boolean materialized() {
+        return true;
+    }
 
     @Override
     public BacktrackingIterator<Record> backtrackingIterator() {
@@ -52,7 +55,7 @@ public class SHJOperator extends JoinOperator {
             // iterator over it once the algorithm completes
             this.joinedRecords = new Run(getTransaction(), getSchema());
             this.run(getLeftSource(), getRightSource(), 1);
-        };
+        }
         return joinedRecords.iterator();
     }
 
@@ -66,15 +69,17 @@ public class SHJOperator extends JoinOperator {
      * value we are joining on and adds that record to the correct partition.
      */
     private void partition(Partition[] partitions, Iterable<Record> leftRecords) {
-        for (Record record: leftRecords) {
+        for (Record rcd : leftRecords) {
             // Partition left records on the chosen column
-            DataBox columnValue = record.getValue(getLeftColumnIndex());
+            DataBox columnValue = rcd.getValue(getLeftColumnIndex());
             int hash = HashFunc.hashDataBox(columnValue, 1);
             // modulo to get which partition to use
             int partitionNum = hash % partitions.length;
-            if (partitionNum < 0)  // hash might be negative
+            if (partitionNum < 0) {
+                // hash might be negative
                 partitionNum += partitions.length;
-            partitions[partitionNum].add(record);
+            }
+            partitions[partitionNum].add(rcd);
         }
     }
 
@@ -83,7 +88,7 @@ public class SHJOperator extends JoinOperator {
      * in rightRecords. Joins the matching records and returns them as the
      * joinedRecords list.
      *
-     * @param partition a partition
+     * @param partition    a partition
      * @param rightRecords An iterable of records from the right relation
      */
     private void buildAndProbe(Partition partition, Iterable<Record> rightRecords) {
@@ -98,18 +103,18 @@ public class SHJOperator extends JoinOperator {
         Map<DataBox, List<Record>> hashTable = new HashMap<>();
 
         // Building stage
-        for (Record leftRecord: partition) {
+        for (Record leftRecord : partition) {
             DataBox leftJoinValue = leftRecord.getValue(this.getLeftColumnIndex());
-            if (!hashTable.containsKey(leftJoinValue)) {
-                hashTable.put(leftJoinValue, new ArrayList<>());
-            }
+            hashTable.putIfAbsent(leftJoinValue, new ArrayList<>());
             hashTable.get(leftJoinValue).add(leftRecord);
         }
 
         // Probing stage
-        for (Record rightRecord: rightRecords) {
+        for (Record rightRecord : rightRecords) {
             DataBox rightJoinValue = rightRecord.getValue(getRightColumnIndex());
-            if (!hashTable.containsKey(rightJoinValue)) continue;
+            if (!hashTable.containsKey(rightJoinValue)) {
+                continue;
+            }
             // We have to join the right record with each left record with
             // a matching key
             for (Record lRecord : hashTable.get(rightJoinValue)) {
@@ -127,7 +132,9 @@ public class SHJOperator extends JoinOperator {
      */
     private void run(Iterable<Record> leftRecords, Iterable<Record> rightRecords, int pass) {
         assert pass >= 1;
-        if (pass > 5) throw new IllegalStateException("Reached the max number of passes");
+        if (pass > MAX_PASSES) {
+            throw new IllegalStateException("Reached the max number of passes");
+        }
 
         // Create empty partitions
         Partition[] partitions = createPartitions();
@@ -135,8 +142,8 @@ public class SHJOperator extends JoinOperator {
         // Partition records into left and right
         this.partition(partitions, leftRecords);
 
-        for (int i = 0; i < partitions.length; i++) {
-            buildAndProbe(partitions[i], rightRecords);
+        for (Partition partition : partitions) {
+            buildAndProbe(partition, rightRecords);
         }
     }
 

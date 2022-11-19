@@ -48,8 +48,11 @@ public class Run implements Iterable<Record> {
     /**
      * @return an iterator over the records in this run
      */
+    @Override
     public BacktrackingIterator<Record> iterator() {
-        if (this.tempTableName == null) return new EmptyBacktrackingIterator<>();
+        if (this.tempTableName == null) {
+            return new EmptyBacktrackingIterator<>();
+        }
         return this.transaction.getRecordIterator(this.tempTableName);
     }
 
