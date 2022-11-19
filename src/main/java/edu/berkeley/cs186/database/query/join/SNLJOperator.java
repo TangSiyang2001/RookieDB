@@ -20,7 +20,7 @@ public class SNLJOperator extends JoinOperator {
                         String rightColumnName,
                         TransactionContext transaction) {
         super(leftSource, materialize(rightSource, transaction),
-              leftColumnName, rightColumnName, transaction, JoinType.SNLJ);
+                leftColumnName, rightColumnName, transaction, JoinType.SNLJ);
         this.stats = this.estimateStats();
     }
 
@@ -43,9 +43,9 @@ public class SNLJOperator extends JoinOperator {
      */
     private class SNLJIterator implements Iterator<Record> {
         // Iterator over all the records of the left relation
-        private Iterator<Record> leftSourceIterator;
+        private final Iterator<Record> leftSourceIterator;
         // Iterator over all the records of the right relation
-        private BacktrackingIterator<Record> rightSourceIterator;
+        private final BacktrackingIterator<Record> rightSourceIterator;
         // The current record from the left relation
         private Record leftRecord;
         // The next record to return
@@ -54,7 +54,9 @@ public class SNLJOperator extends JoinOperator {
         public SNLJIterator() {
             super();
             this.leftSourceIterator = getLeftSource().iterator();
-            if (leftSourceIterator.hasNext()) leftRecord = leftSourceIterator.next();
+            if (leftSourceIterator.hasNext()) {
+                leftRecord = leftSourceIterator.next();
+            }
 
             this.rightSourceIterator = getRightSource().backtrackingIterator();
             this.rightSourceIterator.markNext();
@@ -69,14 +71,14 @@ public class SNLJOperator extends JoinOperator {
                 // The left source was empty, nothing to fetch
                 return null;
             }
-            while(true) {
+            while (true) {
                 if (this.rightSourceIterator.hasNext()) {
                     // there's a next right record, join it if there's a match
                     Record rightRecord = rightSourceIterator.next();
                     if (compare(leftRecord, rightRecord) == 0) {
                         return leftRecord.concat(rightRecord);
                     }
-                } else if (leftSourceIterator.hasNext()){
+                } else if (leftSourceIterator.hasNext()) {
                     // there's no more right records but there's still left
                     // records. Advance left and reset right
                     this.leftRecord = leftSourceIterator.next();
@@ -90,13 +92,17 @@ public class SNLJOperator extends JoinOperator {
 
         @Override
         public boolean hasNext() {
-            if (this.nextRecord == null) this.nextRecord = fetchNextRecord();
+            if (this.nextRecord == null) {
+                this.nextRecord = fetchNextRecord();
+            }
             return this.nextRecord != null;
         }
 
         @Override
         public Record next() {
-            if (!this.hasNext()) throw new NoSuchElementException();
+            if (!this.hasNext()) {
+                throw new NoSuchElementException();
+            }
             Record nextRecord = this.nextRecord;
             this.nextRecord = null;
             return nextRecord;

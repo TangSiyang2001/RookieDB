@@ -9,17 +9,32 @@ import java.util.NoSuchElementException;
  * rest of the mark and reset logic is handled in this class.
  */
 public abstract class IndexBacktrackingIterator<T> implements BacktrackingIterator<T> {
-    private int maxIndex; // highest index of the collection
-    private int prevIndex = -1; // index of the previously yielded item
-    private int nextIndex = -1; // index of the next item to be yielded
-    private int markIndex = -1; // index of the most recently marked item
 
-    public IndexBacktrackingIterator(int maxIndex) {
+    /**
+     * highest index of the collection
+     */
+    private final int maxIndex;
+    /**
+     * index of the previously yielded item
+     */
+    private int prevIndex = -1;
+    /**
+     * index of the next item to be yielded
+     */
+    private int nextIndex = -1;
+    /**
+     * index of the most recently marked item
+     */
+    private int markIndex = -1;
+
+    protected IndexBacktrackingIterator(int maxIndex) {
         this.maxIndex = maxIndex;
     }
 
     /**
      * Get the next non-empty index. Initial call uses -1.
+     *
+     * @param currentIndex the current index
      * @return next non-empty index or the max index if no more values.
      */
     protected abstract int getNextNonEmpty(int currentIndex);
@@ -27,6 +42,7 @@ public abstract class IndexBacktrackingIterator<T> implements BacktrackingIterat
     /**
      * Get the value at the given index. Index will always be a value returned
      * by getNextNonEmpty.
+     *
      * @param index index to get value at
      * @return value at index
      */
@@ -34,13 +50,17 @@ public abstract class IndexBacktrackingIterator<T> implements BacktrackingIterat
 
     @Override
     public boolean hasNext() {
-        if (this.nextIndex == -1) this.nextIndex = getNextNonEmpty(nextIndex);
+        if (this.nextIndex == -1) {
+            this.nextIndex = getNextNonEmpty(nextIndex);
+        }
         return this.nextIndex < this.maxIndex;
     }
 
     @Override
     public T next() {
-        if (!this.hasNext()) throw new NoSuchElementException();
+        if (!this.hasNext()) {
+            throw new NoSuchElementException();
+        }
         T value = getValue(this.nextIndex);
         this.prevIndex = this.nextIndex;
         this.nextIndex = this.getNextNonEmpty(this.nextIndex);
@@ -49,18 +69,24 @@ public abstract class IndexBacktrackingIterator<T> implements BacktrackingIterat
 
     @Override
     public void markPrev() {
-        if (prevIndex == -1) return;
+        if (prevIndex == -1) {
+            return;
+        }
         this.markIndex = this.prevIndex;
     }
 
     @Override
     public void markNext() {
-        if (hasNext()) markIndex = nextIndex;
+        if (hasNext()) {
+            markIndex = nextIndex;
+        }
     }
 
     @Override
     public void reset() {
-        if (this.markIndex == -1) return;
+        if (this.markIndex == -1) {
+            return;
+        }
         this.prevIndex = -1;
         this.nextIndex = this.markIndex;
     }

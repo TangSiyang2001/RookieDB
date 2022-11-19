@@ -46,8 +46,8 @@ import java.util.List;
  *   stats.getHistograms(); // Histograms on each column.
  */
 public class TableStats {
-    private Schema schema;
-    private int numRecordsPerPage;
+    private final Schema schema;
+    private final int numRecordsPerPage;
     private int numRecords;
     private List<Histogram> histograms;
 
@@ -72,6 +72,7 @@ public class TableStats {
     }
 
     // Modifiers /////////////////////////////////////////////////////////////////
+
     public void addRecord(Record record) {
         numRecords++;
     }
@@ -94,6 +95,7 @@ public class TableStats {
     }
 
     // Accessors /////////////////////////////////////////////////////////////////
+
     public Schema getSchema() { return schema; }
 
     public int getNumRecords() {
@@ -187,12 +189,12 @@ public class TableStats {
         Schema joinedSchema = this.schema.concat(rightStats.schema);
         int inputSize = this.numRecords * rightStats.numRecords;
         int leftNumDistinct = 1;
-        if (this.histograms.size() > 0) {
+        if (!this.histograms.isEmpty()) {
             leftNumDistinct = this.histograms.get(leftIndex).getNumDistinct() + 1;
         }
 
         int rightNumDistinct = 1;
-        if (rightStats.histograms.size() > 0) {
+        if (!rightStats.histograms.isEmpty()) {
             rightNumDistinct = rightStats.histograms.get(rightIndex).getNumDistinct() + 1;
         }
 

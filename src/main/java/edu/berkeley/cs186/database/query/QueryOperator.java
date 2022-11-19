@@ -20,6 +20,9 @@ public abstract class QueryOperator implements Iterable<Record> {
     protected TableStats stats;
 
     public enum OperatorType {
+        /**
+         * types of operator
+         */
         PROJECT,
         SEQ_SCAN,
         INDEX_SCAN,
@@ -31,13 +34,13 @@ public abstract class QueryOperator implements Iterable<Record> {
         MATERIALIZE
     }
 
-    private OperatorType type;
+    private final OperatorType type;
 
     /**
      * Creates a QueryOperator without a set source, destination, or schema.
      * @param type the operator's type (Join, Project, Select, etc...)
      */
-    public QueryOperator(OperatorType type) {
+    protected QueryOperator(OperatorType type) {
         this.type = type;
         this.source = null;
         this.outputSchema = null;
@@ -147,11 +150,6 @@ public abstract class QueryOperator implements Iterable<Record> {
     protected abstract Schema computeSchema();
 
     /**
-     * @return an iterator over the output records of this operator
-     */
-    public abstract Iterator<Record> iterator();
-
-    /**
      * @return true if the records of this query operator are materialized in a
      * table.
      */
@@ -205,10 +203,11 @@ public abstract class QueryOperator implements Iterable<Record> {
 
     public abstract String str();
 
+    @Override
     public String toString() {
         String r = this.str();
         if (this.source != null) {
-            r += ("\n-> " + this.source.toString()).replaceAll("\n", "\n\t");
+            r += ("\n-> " + this.source).replace("\n", "\n\t");
         }
         return r;
     }

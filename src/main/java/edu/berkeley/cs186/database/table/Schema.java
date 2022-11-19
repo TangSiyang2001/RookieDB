@@ -153,8 +153,9 @@ public class Schema {
         copy.fieldTypes = new ArrayList<>(fieldTypes);
         copy.fieldNames = new ArrayList<>(fieldNames);
         copy.sizeInBytes = sizeInBytes;
-        for(int i = 0; i < other.size(); i++)
+        for(int i = 0; i < other.size(); i++) {
             copy.add(other.fieldNames.get(i), other.fieldTypes.get(i));
+        }
         return copy;
     }
 

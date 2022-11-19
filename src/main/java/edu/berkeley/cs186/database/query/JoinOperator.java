@@ -8,6 +8,9 @@ import edu.berkeley.cs186.database.table.stats.TableStats;
 
 public abstract class JoinOperator extends QueryOperator {
     public enum JoinType {
+        /**
+         * types of joining algorithms
+         */
         SNLJ,
         PNLJ,
         BNLJ,
@@ -17,20 +20,28 @@ public abstract class JoinOperator extends QueryOperator {
     }
     protected JoinType joinType;
 
-    // the source operators
-    private QueryOperator leftSource;
-    private QueryOperator rightSource;
+    /**
+     * the source operators
+     */
+    private final QueryOperator leftSource;
+    private final QueryOperator rightSource;
 
-    // join column indices
+    /**
+     * join column indices
+     */
     private int leftColumnIndex;
     private int rightColumnIndex;
 
-    // join column names
-    private String leftColumnName;
-    private String rightColumnName;
+    /**
+     * join column names
+     */
+    private final String leftColumnName;
+    private final String rightColumnName;
 
-    // current transaction
-    private TransactionContext transaction;
+    /**
+     * current transaction
+     */
+    private final TransactionContext transaction;
 
     /**
      * Create a join operator that pulls tuples from leftSource and rightSource.
@@ -41,7 +52,7 @@ public abstract class JoinOperator extends QueryOperator {
      * @param leftColumnName the column to join on from leftSource
      * @param rightColumnName the column to join on from rightSource
      */
-    public JoinOperator(QueryOperator leftSource,
+    protected JoinOperator(QueryOperator leftSource,
                  QueryOperator rightSource,
                  String leftColumnName,
                  String rightColumnName,
@@ -88,10 +99,10 @@ public abstract class JoinOperator extends QueryOperator {
     public String toString() {
         String r = this.str();
         if (this.leftSource != null) {
-            r += ("\n-> " + this.leftSource.toString()).replaceAll("\n", "\n\t");
+            r += ("\n-> " + this.leftSource).replace("\n", "\n\t");
         }
         if (this.rightSource != null) {
-            r += ("\n-> " + this.rightSource.toString()).replaceAll("\n", "\n\t");
+            r += ("\n-> " + this.rightSource).replace("\n", "\n\t");
         }
         return r;
     }

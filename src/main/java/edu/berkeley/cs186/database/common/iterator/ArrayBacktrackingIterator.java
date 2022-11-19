@@ -13,6 +13,7 @@ public class ArrayBacktrackingIterator<T> extends IndexBacktrackingIterator<T> {
         this.array = array;
     }
 
+    @SuppressWarnings("unchecked")
     public ArrayBacktrackingIterator(List<T> list) {
         this((T[]) list.toArray());
     }

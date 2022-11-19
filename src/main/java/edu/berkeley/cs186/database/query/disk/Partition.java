@@ -46,6 +46,7 @@ public class Partition implements Iterable<Record> {
     /**
      * @return an iterator over the records in this partition
      */
+    @Override
     public BacktrackingIterator<Record> iterator() {
         return this.transaction.getRecordIterator(this.tempTableName);
     }
