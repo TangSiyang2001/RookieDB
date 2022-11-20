@@ -69,7 +69,9 @@ public class ConcatBacktrackingIterator<T> implements BacktrackingIterator<T> {
 
     @Override
     public T next() {
-        if (!hasNext()) throw new NoSuchElementException();
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
         T item = this.nextItemIterator.next();
         this.prevItemIterator = this.nextItemIterator;
         prevIndex = nextIndex;

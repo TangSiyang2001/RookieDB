@@ -7,66 +7,25 @@ import java.nio.charset.Charset;
 /**
  * A DataBox is an element of one of the primitive types specified in Type.java.
  * You can create
- *   - booleans with new BoolDataBox(b),
- *   - integers with new IntDataBox(i),
- *   - floats with new FloatDataBox(f),
- *   - strings with new StringDataBox(s, n), and
- *   - longs with new LongDataBox(l).
- *
+ * - booleans with new BoolDataBox(b),
+ * - integers with new IntDataBox(i),
+ * - floats with new FloatDataBox(f),
+ * - strings with new StringDataBox(s, n), and
+ * - longs with new LongDataBox(l).
+ * <p>
  * You can unwrap a data box by first pattern matching on its type and them using
  * one of getBool, getInt, getFloat, getString, and getLong:
- *
- *   DataBox d = DataBox.fromBytes(bytes);
- *   switch (d.getTypeId()) {
- *     case BOOL:   { System.out.println(d.getBool()); }
- *     case INT:    { System.out.println(d.getInt()); }
- *     case FLOAT:  { System.out.println(d.getFloat()); }
- *     case STRING: { System.out.println(d.getString()); }
- *     case LONG:   { System.out.println(d.getLong()); }
- *   }
+ * <p>
+ * DataBox d = DataBox.fromBytes(bytes);
+ * switch (d.getTypeId()) {
+ * case BOOL:   { System.out.println(d.getBool()); }
+ * case INT:    { System.out.println(d.getInt()); }
+ * case FLOAT:  { System.out.println(d.getFloat()); }
+ * case STRING: { System.out.println(d.getString()); }
+ * case LONG:   { System.out.println(d.getLong()); }
+ * }
  */
 public abstract class DataBox implements Comparable<DataBox> {
-    public abstract Type type();
-
-    public abstract TypeId getTypeId();
-
-    public boolean getBool() { throw new RuntimeException("not boolean type"); }
-
-    public int getInt() { throw new RuntimeException("not int type"); }
-
-    public float getFloat() { throw new RuntimeException("not float type"); }
-
-    public String getString() { throw new RuntimeException("not String type"); }
-
-    public long getLong() {
-        throw new RuntimeException("not Long type");
-    }
-
-    public byte[] getByteArray() { throw new RuntimeException("not Byte Array type"); }
-
-    /**
-     * Databoxes are serialized as follows:
-     * - BoolDataBoxes are serialized to a single byte that is 0 if the
-     *   BoolDataBox is false and 1 if the Databox is true.
-     * - An IntDataBox and a FloatDataBox are serialized to their 4-byte
-     *   values (e.g. using ByteBuffer::putInt or ByteBuffer::putFloat).
-     * - The first byte of a serialized m-byte StringDataBox is the 4-byte
-     *   number m. Then come the m bytes of the string.
-     *
-     * Note that when DataBoxes are serialized, they do not serialize their type.
-     * That is, serialized DataBoxes are not self-descriptive; you need the type
-     * of a Databox in order to parse it.
-     */
-    public abstract byte[] toBytes();
-
-    /**
-     * Same as toBytes() for every DataBox except for StringDataBox, which needs
-     * to be handled specially to preserve equality over different lengths.
-     */
-    public byte[] hashBytes() {
-        return toBytes();
-    }
-
     public static DataBox fromBytes(Buffer buf, Type type) {
         switch (type.getTypeId()) {
             case BOOL: {
@@ -96,7 +55,7 @@ public abstract class DataBox implements Comparable<DataBox> {
             }
             default: {
                 String err = String.format("Unhandled TypeId %s.",
-                                           type.getTypeId().toString());
+                        type.getTypeId().toString());
                 throw new IllegalArgumentException(err);
             }
         }
@@ -106,12 +65,18 @@ public abstract class DataBox implements Comparable<DataBox> {
         String raw = s;
         s = s.toLowerCase().trim();
         switch (type.getTypeId()) {
-            case BOOL: return new BoolDataBox(s.equals("true"));
-            case INT: return new IntDataBox(Integer.parseInt(s));
-            case LONG: return new LongDataBox(Long.parseLong(s));
-            case FLOAT: return new FloatDataBox(Float.parseFloat(s));
-            case STRING: return new StringDataBox(raw);
-            default: throw new RuntimeException("Unreachable code");
+            case BOOL:
+                return new BoolDataBox(s.equals("true"));
+            case INT:
+                return new IntDataBox(Integer.parseInt(s));
+            case LONG:
+                return new LongDataBox(Long.parseLong(s));
+            case FLOAT:
+                return new FloatDataBox(Float.parseFloat(s));
+            case STRING:
+                return new StringDataBox(raw);
+            default:
+                throw new RuntimeException("Unreachable code");
         }
     }
 
@@ -122,12 +87,12 @@ public abstract class DataBox implements Comparable<DataBox> {
      * wrapper type for one of the primitives we support, then return a DataBox
      * of the proper type wrapping the object. Useful for making the record
      * constructor and QueryPlan methods more readable.
-     *
+     * <p>
      * Examples:
      * - DataBox.fromObject(186) ==  new IntDataBox(186)
      * - DataBox.fromObject("186") == new StringDataBox("186")
      * - DataBox.fromObject(new ArrayList<>()) // Error! ArrayList isn't a
-     *                                         // primitive we support
+     * // primitive we support
      */
     public static DataBox fromObject(Object o) {
         if (o instanceof DataBox) {
@@ -157,6 +122,57 @@ public abstract class DataBox implements Comparable<DataBox> {
             return new ByteArrayDataBox((byte[]) o, ((byte[]) o).length);
         }
         throw new IllegalArgumentException("Object was not a supported data type");
+    }
+
+    public abstract Type type();
+
+    public abstract TypeId getTypeId();
+
+    public boolean getBool() {
+        throw new RuntimeException("not boolean type");
+    }
+
+    public int getInt() {
+        throw new RuntimeException("not int type");
+    }
+
+    public float getFloat() {
+        throw new RuntimeException("not float type");
+    }
+
+    public String getString() {
+        throw new RuntimeException("not String type");
+    }
+
+    public long getLong() {
+        throw new RuntimeException("not Long type");
+    }
+
+    public byte[] getByteArray() {
+        throw new RuntimeException("not Byte Array type");
+    }
+
+    /**
+     * Databoxes are serialized as follows:
+     * - BoolDataBoxes are serialized to a single byte that is 0 if the
+     * BoolDataBox is false and 1 if the Databox is true.
+     * - An IntDataBox and a FloatDataBox are serialized to their 4-byte
+     * values (e.g. using ByteBuffer::putInt or ByteBuffer::putFloat).
+     * - The first byte of a serialized m-byte StringDataBox is the 4-byte
+     * number m. Then come the m bytes of the string.
+     * <p>
+     * Note that when DataBoxes are serialized, they do not serialize their type.
+     * That is, serialized DataBoxes are not self-descriptive; you need the type
+     * of a Databox in order to parse it.
+     */
+    public abstract byte[] toBytes();
+
+    /**
+     * Same as toBytes() for every DataBox except for StringDataBox, which needs
+     * to be handled specially to preserve equality over different lengths.
+     */
+    public byte[] hashBytes() {
+        return toBytes();
     }
 
     @Override

@@ -20,8 +20,8 @@ public class SortMergeOperator extends JoinOperator {
                              String rightColumnName,
                              TransactionContext transaction) {
         super(prepareLeft(transaction, leftSource, leftColumnName),
-              prepareRight(transaction, rightSource, rightColumnName),
-              leftColumnName, rightColumnName, transaction, JoinType.SORTMERGE);
+                prepareRight(transaction, rightSource, rightColumnName),
+                leftColumnName, rightColumnName, transaction, JoinType.SORTMERGE);
         this.stats = this.estimateStats();
     }
 
@@ -34,7 +34,9 @@ public class SortMergeOperator extends JoinOperator {
                                              QueryOperator leftSource,
                                              String leftColumn) {
         leftColumn = leftSource.getSchema().matchFieldName(leftColumn);
-        if (leftSource.sortedBy().contains(leftColumn)) return leftSource;
+        if (leftSource.sortedBy().contains(leftColumn)) {
+            return leftSource;
+        }
         return new SortOperator(transaction, leftSource, leftColumn);
     }
 
@@ -75,24 +77,23 @@ public class SortMergeOperator extends JoinOperator {
 
     /**
      * An implementation of Iterator that provides an iterator interface for this operator.
-     *    See lecture slides.
-     *
+     * See lecture slides.
+     * <p>
      * Before proceeding, you should read and understand SNLJOperator.java
-     *    You can find it in the same directory as this file.
-     *
+     * You can find it in the same directory as this file.
+     * <p>
      * Word of advice: try to decompose the problem into distinguishable sub-problems.
-     *    This means you'll probably want to add more methods than those given (Once again,
-     *    SNLJOperator.java might be a useful reference).
-     *
+     * This means you'll probably want to add more methods than those given (Once again,
+     * SNLJOperator.java might be a useful reference).
      */
     private class SortMergeIterator implements Iterator<Record> {
         /**
-        * Some member variables are provided for guidance, but there are many possible solutions.
-        * You should implement the solution that's best for you, using any member variables you need.
-        * You're free to use these member variables, but you're not obligated to.
-        */
-        private Iterator<Record> leftIterator;
-        private BacktrackingIterator<Record> rightIterator;
+         * Some member variables are provided for guidance, but there are many possible solutions.
+         * You should implement the solution that's best for you, using any member variables you need.
+         * You're free to use these member variables, but you're not obligated to.
+         */
+        private final Iterator<Record> leftIterator;
+        private final BacktrackingIterator<Record> rightIterator;
         private Record leftRecord;
         private Record nextRecord;
         private Record rightRecord;
@@ -118,7 +119,9 @@ public class SortMergeOperator extends JoinOperator {
          */
         @Override
         public boolean hasNext() {
-            if (this.nextRecord == null) this.nextRecord = fetchNextRecord();
+            if (this.nextRecord == null) {
+                this.nextRecord = fetchNextRecord();
+            }
             return this.nextRecord != null;
         }
 
@@ -128,18 +131,73 @@ public class SortMergeOperator extends JoinOperator {
          */
         @Override
         public Record next() {
-            if (!this.hasNext()) throw new NoSuchElementException();
+            if (!this.hasNext()) {
+                throw new NoSuchElementException();
+            }
             Record nextRecord = this.nextRecord;
             this.nextRecord = null;
             return nextRecord;
         }
 
         /**
+         * <p>
          * Returns the next record that should be yielded from this join,
          * or null if there are no more records to join.
          */
         private Record fetchNextRecord() {
             // TODO(proj3_part1): implement
+            while (true) {
+                if (!marked) {
+                    //do mark
+                    doMark();
+                }
+                if (leftRecord == null || rightRecord == null) {
+                    return null;
+                }
+                if (compare(leftRecord, rightRecord) == 0) {
+                    //result = <R, S>
+                    final Record joinRet = leftRecord.concat(rightRecord);
+                    //advance S
+                    rightRecord = advance(rightIterator);
+                    if (rightRecord == null) {
+                        prepareNextRound();
+                    }
+                    //yield result
+                    return joinRet;
+                }
+                //reset s to mark,advance R
+                prepareNextRound();
+                //mark = NULL
+                marked = false;
+            }
+        }
+
+        private void prepareNextRound() {
+            rightIterator.reset();
+            rightRecord = advance(rightIterator);
+            //advance R
+            leftRecord = advance(leftIterator);
+        }
+
+        private void doMark() {
+            if (leftRecord == null || rightRecord == null) {
+                return;
+            }
+            while (leftRecord == null || compare(leftRecord, rightRecord) < 0) {
+                leftRecord = advance(leftIterator);
+            }
+            while (rightRecord == null || compare(leftRecord, rightRecord) > 0) {
+                rightRecord = advance(rightIterator);
+            }
+            // mark start of \block" of S
+            marked = true;
+            rightIterator.markPrev();
+        }
+
+        private Record advance(Iterator<Record> iterator) {
+            if (iterator.hasNext()) {
+                return iterator.next();
+            }
             return null;
         }
 
