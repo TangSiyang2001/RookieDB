@@ -55,6 +55,7 @@ public class GHJOperator extends JoinOperator {
      * exactly 8 records.
      *
      * @return Pair of leftRecords and rightRecords
+     * @apiNote for testing
      */
     public static Pair<List<Record>, List<Record>> getBreakSHJInputs() {
         ArrayList<Record> leftRecords = new ArrayList<>();
@@ -81,6 +82,7 @@ public class GHJOperator extends JoinOperator {
      * exactly 8 records.
      *
      * @return Pair of leftRecords and rightRecords
+     * @apiNote for testing
      */
     public static Pair<List<Record>, List<Record>> getBreakGHJInputs() {
         ArrayList<Record> leftRecords = new ArrayList<>();
@@ -258,7 +260,7 @@ public class GHJOperator extends JoinOperator {
      */
     private Partition[] createPartitions(boolean left) {
         int usableBuffers = this.numBuffers - 1;
-        Partition partitions[] = new Partition[usableBuffers];
+        Partition[] partitions = new Partition[usableBuffers];
         for (int i = 0; i < usableBuffers; i++) {
             partitions[i] = createPartition(left);
         }
@@ -274,9 +276,11 @@ public class GHJOperator extends JoinOperator {
      * @return a partition to store records from the specified partition
      */
     private Partition createPartition(boolean left) {
-        Schema schema = getRightSource().getSchema();
+        Schema schema;
         if (left) {
             schema = getLeftSource().getSchema();
+        } else {
+            schema = getRightSource().getSchema();
         }
         return new Partition(getTransaction(), schema);
     }
