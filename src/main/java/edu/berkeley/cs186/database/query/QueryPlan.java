@@ -17,31 +17,61 @@ import java.util.*;
  * and calling execute generates and executes a QueryPlan DAG.
  */
 public class QueryPlan {
-    // The transaction this query will be executed within
-    private TransactionContext transaction;
-    // A query operator representing the final query plan
+
+    /**
+     * The transaction this query will be executed within
+     */
+    private final TransactionContext transaction;
+    /**
+     * A list of aliased table names involved in this query (FROM clause)
+     */
+    private final List<String> tableNames;
+    /**
+     * A list of objects representing joins (INNER JOIN clauses)
+     */
+    private final List<JoinPredicate> joinPredicates;
+    /**
+     * A map from aliases to tableNames (tableName AS alias)
+     */
+    private final Map<String, String> aliases;
+    /**
+     * Aliases for temporary tables from WITH clause
+     */
+    private final Map<String, String> cteAliases;
+    /**
+     * A list of objects representing selection predicates (WHERE clause)
+     */
+    private final List<SelectPredicate> selectPredicates;
+    /**
+     * A query operator representing the final query plan
+     */
     private QueryOperator finalOperator;
-    // A list of columns to output (SELECT clause)
+    /**
+     * A list of columns to output (SELECT clause)
+     */
     private List<String> projectColumns;
-    // Used by command line version to pass expressions to evaluate
+    /**
+     * Used by command line version to pass expressions to evaluate
+     */
     private List<Expression> projectFunctions;
-    // A list of aliased table names involved in this query (FROM clause)
-    private List<String> tableNames;
-    // A list of objects representing joins (INNER JOIN clauses)
-    private List<JoinPredicate> joinPredicates;
-    // A map from aliases to tableNames (tableName AS alias)
-    private Map<String, String> aliases;
-    // Aliases for temporary tables from WITH clause
-    private Map<String, String> cteAliases;
-    // A list of objects representing selection predicates (WHERE clause)
-    private List<SelectPredicate> selectPredicates;
-    // A list of columns to group by (GROUP BY clause)
+    /**
+     * A list of columns to group by (GROUP BY clause)
+     */
     private List<String> groupByColumns;
-    // Column to sort on
+
+    /**
+     * Column to sort on
+     */
     private String sortColumn;
-    // A limit to the number of records yielded (LIMIT clause)
+
+    /**
+     * A limit to the number of records yielded (LIMIT clause)
+     */
     private int limit;
-    // An offset to the records yielded (OFFSET clause)
+
+    /**
+     * An offset to the records yielded (OFFSET clause)
+     */
     private int offset;
 
     /**
@@ -108,15 +138,18 @@ public class QueryPlan {
             Schema s = transaction.getSchema(tableName);
             for (String fieldName : s.getFieldNames()) {
                 if (fieldName.equals(column)) {
-                    if (result != null) throw new RuntimeException(
-                            "Ambiguous column name `" + column + " found in both `" +
-                                    result + "` and `" + tableName + "`.");
+                    if (result != null) {
+                        throw new RuntimeException(
+                                "Ambiguous column name `" + column + " found in both `" +
+                                        result + "` and `" + tableName + "`.");
+                    }
                     result = tableName;
                 }
             }
         }
-        if (result == null)
+        if (result == null) {
             throw new IllegalArgumentException("Unknown column `" + column + "`");
+        }
         return result;
     }
 
@@ -135,9 +168,9 @@ public class QueryPlan {
         // FROM clause
         String baseTable = this.tableNames.get(0);
         String alias = aliases.get(baseTable);
-        if (baseTable.equals(aliases.get(baseTable)))
+        if (baseTable.equals(aliases.get(baseTable))) {
             result.append(String.format("%nFROM %s%n", baseTable));
-        else {
+        } else {
             result.append(String.format("%nFROM %s AS %s%n", baseTable, alias));
         }
         // INNER JOIN clauses
@@ -210,9 +243,11 @@ public class QueryPlan {
      */
     private void addProject() {
         if (!this.projectColumns.isEmpty()) {
-            if (this.finalOperator == null) throw new RuntimeException(
-                    "Can't add Project onto null finalOperator."
-            );
+            if (this.finalOperator == null) {
+                throw new RuntimeException(
+                        "Can't add Project onto null finalOperator."
+                );
+            }
             if (this.projectFunctions == null) {
                 this.finalOperator = new ProjectOperator(
                         this.finalOperator,
@@ -435,9 +470,9 @@ public class QueryPlan {
             throw new UnsupportedOperationException("Duplicate alias " + alias);
         }
         cteAliases.put(alias, tableName);
-        for (String k : aliases.keySet()) {
-            if (aliases.get(k).equalsIgnoreCase(alias.toLowerCase())) {
-                aliases.put(k, tableName);
+        for (Map.Entry<String, String> entry : aliases.entrySet()) {
+            if (alias.toLowerCase().equalsIgnoreCase(entry.getKey())) {
+                entry.setValue(tableName);
             }
         }
         this.transaction.setAliasMap(this.aliases);
@@ -659,7 +694,9 @@ public class QueryPlan {
     private int getEligibleIndexColumnNaive() {
         boolean hasGroupBy = !this.groupByColumns.isEmpty();
         boolean hasJoin = !this.joinPredicates.isEmpty();
-        if (hasGroupBy || hasJoin) return -1;
+        if (hasGroupBy || hasJoin) {
+            return -1;
+        }
         for (int i = 0; i < selectPredicates.size(); i++) {
             // For each selection predicate, check if we have an index on the
             // predicate's column. If the predicate operator is something
@@ -748,7 +785,9 @@ public class QueryPlan {
             if (column.contains(".")) {
                 this.tableName = column.split("\\.")[0];
                 column = column.split("\\.")[1];
-            } else this.tableName = resolveColumn(column);
+            } else {
+                this.tableName = resolveColumn(column);
+            }
             this.column = column;
             this.operator = operator;
             this.value = value;
@@ -770,7 +809,7 @@ public class QueryPlan {
         String leftColumn;
         String rightTable;
         String rightColumn;
-        private String joinTable; // Just for formatting purposes
+        private final String joinTable; // Just for formatting purposes
 
         JoinPredicate(String tableName, String leftColumn, String rightColumn) {
             if (!leftColumn.contains(".") || !rightColumn.contains(".")) {
@@ -787,9 +826,7 @@ public class QueryPlan {
             if (!tableName.equals(rightTable) && !tableName.equals(leftTable)) {
                 throw new IllegalArgumentException(String.format(
                         "`%s` is invalid. ON clause of INNER JOIN must contain the " +
-                                "new table being joined.",
-                        this.toString()
-                ));
+                                "new table being joined.", this));
             }
         }
 
