@@ -624,6 +624,7 @@ public class QueryPlan {
         //      calculate the cheapest join with the new table (the one you
         //      fetched an operator for from pass1Map) and the previously joined
         //      tables. Then, update the result map if needed.
+
         return result;
     }
 
@@ -675,7 +676,22 @@ public class QueryPlan {
         // Set the final operator to the lowest cost operator from the last
         // pass, add group by, project, sort and limit operators, and return an
         // iterator over the final operator.
-        return this.executeNaive(); // TODO(proj3_part2): Replace this!
+
+        //we use dp here to calculate the min cost
+        final Map<Set<String>, QueryOperator> pass1Map = new HashMap<>(tableNames.size());
+        for (String tableName : tableNames) {
+            pass1Map.put(Collections.singleton(tableName), minCostSingleAccess(tableName));
+        }
+        Map<Set<String>, QueryOperator> prevMap = pass1Map;
+        for (int i = 0; i < tableNames.size() - 1; i++) {
+            prevMap = minCostJoins(prevMap, pass1Map);
+        }
+        this.finalOperator = minCostOperator(prevMap);
+        //add group by, project, sort and limit operators
+        addGroupBy();
+        addProject();
+        addLimit();
+        return this.finalOperator.iterator(); // TODO(proj3_part2): Replace this!
     }
 
     // Task 7: Optimal Plan Selection //////////////////////////////////////////
@@ -805,11 +821,11 @@ public class QueryPlan {
      * INNER JOIN table2 ON table2.some_id = table1.some_id
      */
     private class JoinPredicate {
+        private final String joinTable; // Just for formatting purposes
         String leftTable;
         String leftColumn;
         String rightTable;
         String rightColumn;
-        private final String joinTable; // Just for formatting purposes
 
         JoinPredicate(String tableName, String leftColumn, String rightColumn) {
             if (!leftColumn.contains(".") || !rightColumn.contains(".")) {
