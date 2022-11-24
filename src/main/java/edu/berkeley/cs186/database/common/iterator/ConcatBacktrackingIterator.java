@@ -55,7 +55,9 @@ public class ConcatBacktrackingIterator<T> implements BacktrackingIterator<T> {
                 this.nextItemIterator = iterables.get(nextIndex).iterator();
             } else {
                 assert(nextIndex + 1 == iterables.size());
-                if (!outerIterator.hasNext()) break;
+                if (!outerIterator.hasNext()) {
+                    break;
+                }
                 iterables.add(outerIterator.next());
             }
         }

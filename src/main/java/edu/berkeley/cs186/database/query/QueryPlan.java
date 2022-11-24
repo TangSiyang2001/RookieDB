@@ -555,8 +555,25 @@ public class QueryPlan {
      */
     public QueryOperator minCostSingleAccess(String table) {
         QueryOperator minOp = new SequentialScanOperator(this.transaction, table);
-
         // TODO(proj3_part2): implement
+        int minCost = minOp.estimateIOCost();
+        int minIdx = -1;
+        for (Integer eligibleIdx : getEligibleIndexColumns(table)) {
+            final SelectPredicate predicate = this.selectPredicates.get(eligibleIdx);
+            final IndexScanOperator indexScanOperator = new IndexScanOperator(
+                    this.transaction,
+                    table,
+                    predicate.column,
+                    predicate.operator,
+                    predicate.value);
+            final int indexScanCost = indexScanOperator.estimateIOCost();
+            if (indexScanCost < minCost) {
+                minOp = indexScanOperator;
+                minCost = indexScanCost;
+                minIdx = eligibleIdx;
+            }
+        }
+        minOp = addEligibleSelections(minOp, minIdx);
         return minOp;
     }
 
@@ -624,7 +641,33 @@ public class QueryPlan {
         //      calculate the cheapest join with the new table (the one you
         //      fetched an operator for from pass1Map) and the previously joined
         //      tables. Then, update the result map if needed.
+        prevMap.forEach((tables, queryOperator) -> {
+            for (JoinPredicate predicate : joinPredicates) {
+                final boolean containsLeft = tables.contains(predicate.leftTable);
+                final boolean containsRight = tables.contains(predicate.rightTable);
+                QueryOperator op;
+                QueryOperator joinOp;
+                final Set<String> currTables = new HashSet<>(tables);
 
+                if (containsLeft && !containsRight) {
+                    op = pass1Map.get(Collections.singleton(predicate.rightTable));
+                    joinOp = minCostJoinType(prevMap.get(tables), op, predicate.leftColumn, predicate.rightColumn);
+                    currTables.add(predicate.rightTable);
+                } else if (containsRight && !containsLeft) {
+                    op = pass1Map.get(Collections.singleton(predicate.leftTable));
+                    //caveat: param should be reverse for the design of #minCostJoinType()
+                    joinOp = minCostJoinType(prevMap.get(tables), op, predicate.rightColumn, predicate.leftColumn);
+                    currTables.add(predicate.leftTable);
+                } else {
+                    continue;
+                }
+
+                if (!result.containsKey(currTables) ||
+                        joinOp.estimateIOCost() < result.get(currTables).estimateIOCost()) {
+                    result.put(currTables, joinOp);
+                }
+            }
+        });
         return result;
     }
 
