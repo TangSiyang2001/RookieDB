@@ -21,7 +21,7 @@ public enum LockType {
      * resource, the lock types are compatible.
      * <p>
      * <p>
-     * | NL  | IS  | IX  |  S  | SIX |  X
+     *     | NL  | IS  | IX  |  S  | SIX |  X
      * ----+-----+-----+-----+-----+-----+-----
      * NL  |  T  |  T  |  T  |  T  |  T  |  T
      * ----+-----+-----+-----+-----+-----+-----
@@ -88,7 +88,7 @@ public enum LockType {
      * ----+-----+-----+-----+-----+-----+-----
      * S   |  T  |  F  |  F  |  F  |  F  |  F
      * ----+-----+-----+-----+-----+-----+-----
-     * SIX |  T  |  F  |  T  |  F  |  T  |  T
+     * SIX |  T  |  F  |  T  |  F  |  F  |  T
      * ----+-----+-----+-----+-----+-----+-----
      * X   |  T  |   F |  F  |  F  |  F  |  F
      * ----+-----+-----+-----+-----+-----+-----
@@ -104,8 +104,7 @@ public enum LockType {
             case IX:
                 return true;
             case SIX:
-                return NL.equals(childLockType) || X.equals(childLockType) || IX.equals(childLockType)
-                        || SIX.equals(childLockType);
+                return NL.equals(childLockType) || X.equals(childLockType) || IX.equals(childLockType);
             case NL:
             case S:
             case X:
@@ -121,19 +120,19 @@ public enum LockType {
      * an X lock, because an X lock allows the transaction to do everything
      * the S lock allowed it to do).
      * <p>
-     * | NL  | IS  | IX  |  S  | SIX |  X
+     *     | NL  | IS  | IX  |  S  | SIX |  X
      * ----+-----+-----+-----+-----+-----+-----
      * NL  |  T  |  F  |  F  |  F  |  F  |  F
      * ----+-----+-----+-----+-----+-----+-----
-     * IS  |     |  T  |  F  |  F  |     |  F
+     * IS  |  T  |  T  |  F  |  F  |  F  |  F
      * ----+-----+-----+-----+-----+-----+-----
-     * IX  |     |  T  |  T  |  F  |     |  F
+     * IX  |  T  |  T  |  T  |  F  |  F  |  F
      * ----+-----+-----+-----+-----+-----+-----
-     * S   |     |     |     |  T  |     |  F
+     * S   |  T  |  T  |  F  |  T  |  F  |  F
      * ----+-----+-----+-----+-----+-----+-----
-     * SIX |     |     |     |  T  |     |  F
+     * SIX |  T  |  T  |  T  |  T  |  T  |  F
      * ----+-----+-----+-----+-----+-----+-----
-     * X   |     |     |     |  T  |     |  T
+     * X   |  T  |  T  |  T  |  T  |  T  |  T
      * ----+-----+-----+-----+-----+-----+-----
      */
     public static boolean substitutable(LockType substitute, LockType required) {
