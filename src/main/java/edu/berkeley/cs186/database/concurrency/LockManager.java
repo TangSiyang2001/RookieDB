@@ -33,16 +33,16 @@ import java.util.*;
 public class LockManager {
     // transactionLocks is a mapping from transaction number to a list of lock
     // objects held by that transaction.
-    private Map<Long, List<Lock>> transactionLocks = new HashMap<>();
+    private final Map<Long, List<Lock>> transactionLocks = new HashMap<>();
 
     // resourceEntries is a mapping from resource names to a ResourceEntry
     // object, which contains a list of Locks on the object, as well as a
     // queue for requests on that resource.
-    private Map<ResourceName, ResourceEntry> resourceEntries = new HashMap<>();
+    private final Map<ResourceName, ResourceEntry> resourceEntries = new HashMap<>();
 
     // A ResourceEntry contains the list of locks on a resource, as well as
     // the queue for requests for locks on the resource.
-    private class ResourceEntry {
+    private static class ResourceEntry {
         // List of currently granted locks on the resource.
         List<Lock> locks = new ArrayList<>();
         // Queue for yet-to-be-satisfied lock requests on this resource.
@@ -118,7 +118,7 @@ public class LockManager {
     }
 
     // You should not modify or use this directly.
-    private Map<String, LockContext> contexts = new HashMap<>();
+    private final Map<String, LockContext> contexts = new HashMap<>();
 
     /**
      * Helper method to fetch the resourceEntry corresponding to `name`.
@@ -133,15 +133,15 @@ public class LockManager {
      * Acquire a `lockType` lock on `name`, for transaction `transaction`, and
      * releases all locks on `releaseNames` held by the transaction after
      * acquiring the lock in one atomic action.
-     *
+     * <p>
      * Error checking must be done before any locks are acquired or released. If
      * the new lock is not compatible with another transaction's lock on the
      * resource, the transaction is blocked and the request is placed at the
      * FRONT of the resource's queue.
-     *
+     * <p>
      * Locks on `releaseNames` should be released only after the requested lock
      * has been acquired. The corresponding queues should be processed.
-     *
+     * <p>
      * An acquire-and-release that releases an old lock on `name` should NOT
      * change the acquisition time of the lock on `name`, i.e. if a transaction
      * acquired locks in the order: S(A), X(B), acquire X(A) and release S(A),
