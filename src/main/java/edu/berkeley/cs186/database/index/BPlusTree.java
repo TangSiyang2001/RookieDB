@@ -52,16 +52,16 @@ import java.util.*;
  */
 public class BPlusTree {
     // Buffer manager
-    private BufferManager bufferManager;
+    private final BufferManager bufferManager;
 
     // B+ tree metadata
-    private BPlusTreeMetadata metadata;
+    private final BPlusTreeMetadata metadata;
 
     // root of the B+ tree
     private BPlusNode root;
 
     // lock context for the B+ tree
-    private LockContext lockContext;
+    private final LockContext lockContext;
 
     // Constructors ////////////////////////////////////////////////////////////
 

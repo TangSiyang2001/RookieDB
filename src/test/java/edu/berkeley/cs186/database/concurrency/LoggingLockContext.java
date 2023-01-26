@@ -28,7 +28,7 @@ public class LoggingLockContext extends LockContext {
         if (this.allowDisable) {
             super.disableChildLocks();
         }
-        ((LoggingLockManager) lockman).emit("disable-children " + name);
+        ((LoggingLockManager) lockManager).emit("disable-children " + name);
     }
 
     /**
@@ -36,7 +36,7 @@ public class LoggingLockContext extends LockContext {
      */
     @Override
     public synchronized LockContext childContext(String name) {
-        LockContext temp = new LoggingLockContext((LoggingLockManager) lockman, this, name,
+        LockContext temp = new LoggingLockContext((LoggingLockManager) lockManager, this, name,
                 this.childLocksDisabled || this.readonly);
         LockContext child = this.children.putIfAbsent(name, temp);
         if (child == null) {
