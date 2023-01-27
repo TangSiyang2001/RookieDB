@@ -22,14 +22,14 @@ import java.util.Map;
  * # Overview
  * A Table represents a database table with which users can insert, get,
  * update, and delete records:
- *
+ * <p>
  *   // Create a brand new table t(x: int, y: int) which is persisted in the
  *   // the heap file associated with `pageDirectory`.
  *   List<String> fieldNames = Arrays.asList("x", "y");
  *   List<String> fieldTypes = Arrays.asList(Type.intType(), Type.intType());
  *   Schema schema = new Schema(fieldNames, fieldTypes);
  *   Table t = new Table("t", schema, pageDirectory, new DummyLockContext());
- *
+ * <p>
  *   // Insert, get, update, and delete records.
  *   List<DataBox> a = Arrays.asList(new IntDataBox(1), new IntDataBox(2));
  *   List<DataBox> b = Arrays.asList(new IntDataBox(3), new IntDataBox(4));
@@ -38,25 +38,25 @@ import java.util.Map;
  *   t.updateRecord(b, rid);
  *   Record rb = t.getRecord(rid);
  *   t.deleteRecord(rid);
- *
+ * <p>
  * # Persistence
  * Every table is persisted in its own PageDirectory object (passed into the constructor),
  * which interfaces with the BufferManager and DiskSpaceManager to save it to disk.
- *
+ * <p>
  * A table can be loaded again by simply constructing it with the same parameters.
- *
+ * <p>
  * # Storage Format
  * Now, we discuss how tables serialize their data.
- *
+ * <p>
  * All pages are data pages - there are no header pages, because all metadata is
  * stored elsewhere (as rows in the _metadata.tables table). Every data
  * page begins with a n-byte bitmap followed by m records. The bitmap indicates
  * which records in the page are valid. The values of n and m are set to maximize the
  * number of records per page (see computeDataPageNumbers for details).
- *
+ * <p>
  * For example, here is a cartoon of what a table's file would look like if we
  * had 5-byte pages and 1-byte records:
- *
+ * <p>
  *          +----------+----------+----------+----------+----------+ \
  *   Page 0 | 1001xxxx | 01111010 | xxxxxxxx | xxxxxxxx | 01100001 |  |
  *          +----------+----------+----------+----------+----------+  |
@@ -66,7 +66,7 @@ import java.util.Map;
  *          +----------+----------+----------+----------+----------+ /
  *           \________/ \________/ \________/ \________/ \________/
  *            bitmap     record 0   record 1   record 2   record 3
- *
+ * <p>
  *  - The first page (Page 0) is a data page. The first byte of this data page
  *    is a bitmap, and the next four bytes are each records. The first and
  *    fourth bit are set indicating that record 0 and record 3 are valid.
@@ -75,16 +75,16 @@ import java.util.Map;
  *    their contents.
  *  - The second and third page (Page 1 and 2) are also data pages and are
  *    formatted similar to Page 0.
- *
+ * <p>
  *  When we add a record to a table, we add it to the very first free slot in
  *  the table. See addRecord for more information.
- *
+ * <p>
  * Some tables have large records. In order to efficiently handle tables with
  * large records (that still fit on a page), we format these tables a bit differently,
  * by giving each record a full page. Tables with full page records do not have a bitmap.
  * Instead, each allocated page is a single record, and we indicate that a page does
  * not contain a record by simply freeing the page.
- *
+ * <p>
  * In some cases, this behavior may be desirable even for small records (our database
  * only supports locking at the page level, so in cases where tuple-level locks are
  * necessary even at the cost of an I/O per tuple, a full page record may be desirable),
@@ -92,13 +92,13 @@ import java.util.Map;
  */
 public class Table implements BacktrackingIterable<Record> {
     // The name of the table.
-    private String name;
+    private final String name;
 
     // The schema of the table.
-    private Schema schema;
+    private final Schema schema;
 
     // The page directory persisting the table.
-    private PageDirectory pageDirectory;
+    private final PageDirectory pageDirectory;
 
     // The size (in bytes) of the bitmap found at the beginning of each data page.
     private int bitmapSizeInBytes;
@@ -107,7 +107,7 @@ public class Table implements BacktrackingIterable<Record> {
     private int numRecordsPerPage;
 
     // The lock context of the table.
-    private LockContext tableContext;
+    private final LockContext tableContext;
 
     // Statistics about the contents of the database.
     Map<String, TableStats> stats;
@@ -207,7 +207,7 @@ public class Table implements BacktrackingIterable<Record> {
         int schemaSize = schema.getSizeInBytes();
         if (schemaSize > pageSize) {
             throw new DatabaseException(String.format(
-                    "Schema of size %f bytes is larger than effective page size",
+                    "Schema of size %d bytes is larger than effective page size",
                     schemaSize
             ));
         }
@@ -301,7 +301,7 @@ public class Table implements BacktrackingIterable<Record> {
 
     /**
      * Overwrites an existing record with new values and returns the existing
-     * record. stats is updated accordingly. An exception is thrown if rid does
+     * record. stats are updated accordingly. An exception is thrown if rid does
      * not correspond to an existing record in the table.
      */
     public synchronized Record updateRecord(RecordId rid, Record updated) {
@@ -310,7 +310,7 @@ public class Table implements BacktrackingIterable<Record> {
         // its on.
         LockContext pageContext = tableContext.childContext(rid.getPageNum());
         // TODO(proj4_part2): Update the following line
-        LockUtil.ensureSufficientLockHeld(pageContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(pageContext, LockType.X);
 
         Record newRecord = schema.verify(updated);
         Record oldRecord = getRecord(rid);
@@ -337,7 +337,7 @@ public class Table implements BacktrackingIterable<Record> {
         LockContext pageContext = tableContext.childContext(rid.getPageNum());
 
         // TODO(proj4_part2): Update the following line
-        LockUtil.ensureSufficientLockHeld(pageContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(pageContext, LockType.X);
 
         Page page = fetchPage(rid.getPageNum());
         try {

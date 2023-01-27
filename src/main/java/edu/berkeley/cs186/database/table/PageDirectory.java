@@ -20,22 +20,22 @@ import java.util.Random;
 /**
  * An implementation of a heap file, using a page directory. Assumes data pages are packed (but record
  * lengths do not need to be fixed-length).
- *
+ * <p>
  * Header pages are layed out as follows:
  * - first byte: 0x1 to indicate valid allocated page
  * - next 4 bytes: page directory id
  * - next 8 bytes: page number of next header page, or -1 (0xFFFFFFFFFFFFFFFF) if no next header page.
  * - next 10 bytes: page number of data page (or -1), followed by 2 bytes of amount of free space
  * - repeat 10 byte entries
- *
+ * <p>
  * Data pages contain a small header containing:
  * - 4-byte page directory id
  * - 4-byte index of which header page manages it
  * - 2-byte offset indicating which slot in the header page its data page entry resides
- *
+ * <p>
  * This header is used to quickly locate and update the header page when the amount of free space on the data page
  * changes, as well as ensure that we do not modify pages in other page directories by accident.
- *
+ * <p>
  * The page directory id is a randomly generated 32-bit integer used to help detect bugs (where we attempt
  * to write to a page that is not managed by the page directory).
  */
@@ -115,7 +115,7 @@ public class PageDirectory implements BacktrackingIterable<Page> {
         Page page = this.firstHeader.loadPageWithSpace(requiredSpace);
         LockContext pageContext = lockContext.childContext(page.getPageNum());
         // TODO(proj4_part2): Update the following line
-        LockUtil.ensureSufficientLockHeld(pageContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(pageContext, LockType.X);
 
         return new DataPage(pageDirectoryId, page);
     }
