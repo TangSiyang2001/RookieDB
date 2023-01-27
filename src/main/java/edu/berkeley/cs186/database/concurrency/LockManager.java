@@ -120,13 +120,18 @@ public class LockManager {
             for (LockRequest lockRequest : waitingQueue) {
                 final Lock lock = lockRequest.lock;
                 final TransactionContext txnContext = lockRequest.transaction;
-                if (!checkCompatible(lock.lockType, txnContext.getTransNum())) {
+                if (!checkCompatible(lock.lockType, lock.transactionNum)) {
                     break;
                 }
-                waitingQueue.removeFirst();
                 grantOrUpdateLock(lock);
                 //everything in `releasedLocks` should be released *before* the transaction is unblocked.
-                lockRequest.releasedLocks.forEach(released -> release(txnContext, lock.name));
+                lockRequest.releasedLocks.forEach(released -> {
+                    ResourceEntry resourceEntry = getResourceEntry(released.name);
+                    if (resourceEntry != this) {
+                        resourceEntry.releaseLock(released);
+                    }
+                });
+                waitingQueue.removeFirst();
                 //then unblock the txn
                 txnContext.unblock();
             }
@@ -315,7 +320,7 @@ public class LockManager {
         synchronized (this) {
             final ResourceEntry resourceEntry = getResourceEntry(name);
             final LockType lockType = resourceEntry.getTransactionLockType(transNum);
-            if (lockType == LockType.NL) {
+            if (Objects.equals(lockType, LockType.NL)) {
                 throw new NoLockHeldException(
                         String.format("Transaction %s did not hold a lock on %s.", transNum, name));
             }

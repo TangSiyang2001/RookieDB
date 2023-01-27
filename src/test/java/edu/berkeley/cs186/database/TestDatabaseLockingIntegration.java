@@ -1,12 +1,9 @@
 package edu.berkeley.cs186.database;
 
-import edu.berkeley.cs186.database.categories.HiddenTests;
 import edu.berkeley.cs186.database.categories.Proj4IntegrationTests;
 import edu.berkeley.cs186.database.categories.PublicTests;
 import edu.berkeley.cs186.database.common.PredicateOperator;
-import edu.berkeley.cs186.database.concurrency.DeterministicRunner;
 import edu.berkeley.cs186.database.concurrency.LoggingLockManager;
-import edu.berkeley.cs186.database.databox.DataBox;
 import edu.berkeley.cs186.database.databox.IntDataBox;
 import edu.berkeley.cs186.database.databox.Type;
 import edu.berkeley.cs186.database.query.QueryPlan;
@@ -24,7 +21,8 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * These tests are sanity checks to make sure that code you bring in from
@@ -71,7 +69,7 @@ public class TestDatabaseLockingIntegration {
     }
 
     @ClassRule
-    public static  TemporaryFolder checkFolder = new TemporaryFolder();
+    public static TemporaryFolder checkFolder = new TemporaryFolder();
 
     @BeforeClass
     public static void beforeAll() {
@@ -85,7 +83,7 @@ public class TestDatabaseLockingIntegration {
         File testDir = tempFolder.newFolder(TestDir);
         this.filename = testDir.getAbsolutePath();
         this.reloadDatabase();
-        try(Transaction t = this.beginTransaction()) {
+        try (Transaction t = this.beginTransaction()) {
             t.dropAllTables();
         } finally {
             this.db.waitAllTransactions();
@@ -144,7 +142,7 @@ public class TestDatabaseLockingIntegration {
         }
     }
 
-    private static List<String> prepare(Long transNum, String ... expected) {
+    private static List<String> prepare(Long transNum, String... expected) {
         return Arrays.stream(expected).map((String log) -> String.format(log,
                 transNum)).collect(Collectors.toList());
     }
@@ -166,7 +164,7 @@ public class TestDatabaseLockingIntegration {
         Schema s = TestUtils.createSchemaWithAllTypes();
         Record input = TestUtils.createRecordWithAllTypes();
         List<RecordId> rids = new ArrayList<>();
-        try(Transaction t1 = beginTransaction()) {
+        try (Transaction t1 = beginTransaction()) {
             t1.createTable(s, tableName);
             int numRecords = pages * t1.getTransactionContext().getTable(tableName).getNumRecordsPerPage();
             for (int i = 0; i < numRecords; ++i) {
@@ -182,10 +180,10 @@ public class TestDatabaseLockingIntegration {
     private List<RecordId> createTableWithIndices(String tableName, int pages,
                                                   List<String> indexColumns) {
         Schema s = new Schema()
-            .add("int1", Type.intType())
-            .add("int2", Type.intType());
+                .add("int1", Type.intType())
+                .add("int2", Type.intType());
         List<RecordId> rids = new ArrayList<>();
-        try(Transaction t1 = beginTransaction()) {
+        try (Transaction t1 = beginTransaction()) {
             t1.createTable(s, tableName);
             for (String col : indexColumns) {
                 t1.createIndex(tableName, col, false);
@@ -197,7 +195,6 @@ public class TestDatabaseLockingIntegration {
         } finally {
             this.db.waitAllTransactions();
         }
-
         return rids;
     }
 
@@ -209,7 +206,7 @@ public class TestDatabaseLockingIntegration {
 
         lockManager.startLog();
 
-        try(Transaction t1 = beginTransaction()) {
+        try (Transaction t1 = beginTransaction()) {
             Iterator<Record> r = t1.getTransactionContext().getRecordIterator(tableName);
             while (r.hasNext()) {
                 r.next();
@@ -230,7 +227,7 @@ public class TestDatabaseLockingIntegration {
 
         lockManager.startLog();
 
-        try(Transaction t1 = beginTransaction()) {
+        try (Transaction t1 = beginTransaction()) {
             Iterator<Record> r = t1.getTransactionContext().sortedScan(tableName, "int");
             while (r.hasNext()) {
                 r.next();
@@ -259,7 +256,7 @@ public class TestDatabaseLockingIntegration {
         List<RecordId> rids = createTableWithIndices(tableName, 1, Arrays.asList("int1", "int2"));
 
         lockManager.startLog();
-        try(Transaction t1 = beginTransaction()) {
+        try (Transaction t1 = beginTransaction()) {
             Iterator<Record> r = t1.getTransactionContext().sortedScan(tableName, "int1");
             while (r.hasNext()) {
                 r.next();
@@ -275,7 +272,7 @@ public class TestDatabaseLockingIntegration {
         }
 
         lockManager.clearLog();
-        try(Transaction t2 = beginTransaction()) {
+        try (Transaction t2 = beginTransaction()) {
             Iterator<Record> r = t2.getTransactionContext().sortedScanFrom(tableName, "int2",
                     new IntDataBox(rids.size() / 2));
             while (r.hasNext()) {
@@ -297,7 +294,7 @@ public class TestDatabaseLockingIntegration {
         List<RecordId> rids = createTableWithIndices(tableName, 1, Arrays.asList("int1", "int2"));
 
         lockManager.startLog();
-        try(Transaction t1 = beginTransaction()) {
+        try (Transaction t1 = beginTransaction()) {
             t1.getTransactionContext().lookupKey(tableName, "int1", new IntDataBox(rids.size() / 2));
             assertContainsAll(prepare(t1.getTransNum(),
                     "acquire %s database IS",
@@ -309,7 +306,7 @@ public class TestDatabaseLockingIntegration {
         }
 
         lockManager.clearLog();
-        try(Transaction t2 = beginTransaction()) {
+        try (Transaction t2 = beginTransaction()) {
             t2.getTransactionContext().contains(tableName, "int2", new IntDataBox(rids.size() / 2 - 1));
             assertContainsAll(prepare(t2.getTransNum(),
                     "acquire %s database IS",
@@ -331,7 +328,7 @@ public class TestDatabaseLockingIntegration {
         db.waitAllTransactions();
         lockManager.startLog();
 
-        try(Transaction t0 = beginTransaction()) {
+        try (Transaction t0 = beginTransaction()) {
             QueryPlan q = t0.query(tableName);
             q.select("int1", PredicateOperator.EQUALS, new IntDataBox(2));
             q.project(Collections.singletonList("int2"));
@@ -351,7 +348,7 @@ public class TestDatabaseLockingIntegration {
         lockManager.startLog();
         lockManager.suppressStatus(true);
 
-        try(Transaction t = beginTransaction()) {
+        try (Transaction t = beginTransaction()) {
             try {
                 t.getTransactionContext().getSchema("badTable");
             } catch (DatabaseException e) { /* do nothing */ }
@@ -367,7 +364,7 @@ public class TestDatabaseLockingIntegration {
     @Test
     @Category(PublicTests.class)
     public void testCreateTableSimple() {
-        try(Transaction t = beginTransaction()) {
+        try (Transaction t = beginTransaction()) {
             try {
                 t.getTransactionContext().getNumDataPages("testTable1");
             } catch (DatabaseException e) { /* do nothing */ }
@@ -377,7 +374,7 @@ public class TestDatabaseLockingIntegration {
         lockManager.startLog();
         createTable("testTable1", 4);
 
-        try(Transaction t = beginTransaction()) {
+        try (Transaction t = beginTransaction()) {
             assertSubsequence(prepare(t.getTransNum() - 1,
                     "acquire %s database IX",
                     "acquire %s database/_metadata.tables IX",
@@ -391,7 +388,7 @@ public class TestDatabaseLockingIntegration {
     public void testCreateIndexSimple() {
         createTableWithIndices("testTable1", 4, Collections.emptyList());
 
-        try(Transaction t = beginTransaction()) {
+        try (Transaction t = beginTransaction()) {
             try {
                 t.getTransactionContext().getTreeHeight("testTable1", "int1");
             } catch (DatabaseException e) { /* do nothing */ }
@@ -400,7 +397,7 @@ public class TestDatabaseLockingIntegration {
 
         lockManager.startLog();
 
-        try(Transaction t = beginTransaction()) {
+        try (Transaction t = beginTransaction()) {
             t.createIndex("testTable1", "int1", false);
             assertSubsequence(prepare(t.getTransNum(),
                     "acquire %s database/_metadata.tables IS",
@@ -421,7 +418,7 @@ public class TestDatabaseLockingIntegration {
         lockManager.startLog();
         lockManager.suppressStatus(true);
 
-        try(Transaction t0 = beginTransaction()) {
+        try (Transaction t0 = beginTransaction()) {
             t0.dropTable(tableName);
 
             assertContainsAll(prepare(t0.getTransNum(),
@@ -444,7 +441,7 @@ public class TestDatabaseLockingIntegration {
         lockManager.startLog();
         lockManager.suppressStatus(true);
 
-        try(Transaction t0 = beginTransaction()) {
+        try (Transaction t0 = beginTransaction()) {
             t0.dropIndex("testTable1", "int1");
 
             assertSubsequence(prepare(t0.getTransNum(),
@@ -461,7 +458,7 @@ public class TestDatabaseLockingIntegration {
     public void testDropAllTables() {
         lockManager.startLog();
 
-        try(Transaction t0 = beginTransaction()) {
+        try (Transaction t0 = beginTransaction()) {
             t0.dropAllTables();
 
             assertEquals(prepare(t0.getTransNum(),

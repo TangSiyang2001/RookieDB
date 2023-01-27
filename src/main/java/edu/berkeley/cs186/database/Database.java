@@ -745,9 +745,6 @@ public class Database implements AutoCloseable {
         public RecordId addRecord(String tableName, Record record) {
             Table tab = getTable(tableName);
             tableName = tab.getName();
-            if (tab == null) {
-                throw new DatabaseException("table `" + tableName + "` does not exist!");
-            }
             RecordId rid = tab.addRecord(record);
             Schema s = tab.getSchema();
             List<String> colNames = s.getFieldNames();
@@ -934,11 +931,16 @@ public class Database implements AutoCloseable {
         public void close() {
             try {
                 // TODO(proj4_part2)
-                final TransactionContext transaction = getTransaction();
-                final List<Lock> locks = lockManager.getLocks(transaction);
-                //notice the acquisition and save of locks are in order
-                for (int i = locks.size() - 1; i >= 0; i--) {
-                    LockContext.fromResourceName(lockManager, locks.get(i).name).release(transaction);
+//                final TransactionContext transaction = getTransaction();
+//                final List<Lock> locks = lockManager.getLocks(transaction);
+//                //notice the acquisition and save of locks are in order
+//                for (int i = locks.size() - 1; i >= 0; i--) {
+//                    LockContext.fromResourceName(lockManager, locks.get(i).name).release(transaction);
+//                }
+                List<Lock> locks = lockManager.getLocks(this);
+                Collections.reverse(locks);
+                for (Lock lock : locks) {
+                    LockContext.fromResourceName(lockManager, lock.name).release(this);
                 }
             } catch (Exception e) {
                 // There's a chance an error message from your release phase

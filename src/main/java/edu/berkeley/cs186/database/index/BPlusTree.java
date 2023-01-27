@@ -155,7 +155,7 @@ public class BPlusTree {
     public Optional<RecordId> get(DataBox key) {
         typeCheck(key);
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         // TODO(proj2): implement
         return root.get(key).getKey(key);
@@ -171,7 +171,7 @@ public class BPlusTree {
     public Iterator<RecordId> scanEqual(DataBox key) {
         typeCheck(key);
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         Optional<RecordId> rid = get(key);
         if (rid.isPresent()) {
@@ -210,7 +210,7 @@ public class BPlusTree {
      */
     public Iterator<RecordId> scanAll() {
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         // TODO(proj2): Return a BPlusTreeIterator.
         return new BPlusTreeIterator();
@@ -242,7 +242,7 @@ public class BPlusTree {
     public Iterator<RecordId> scanGreaterEqual(DataBox key) {
         typeCheck(key);
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         // TODO(proj2): Return a BPlusTreeIterator.
         final LeafNode leafNode = root.get(key);
@@ -261,7 +261,7 @@ public class BPlusTree {
     public void put(DataBox key, RecordId rid) {
         typeCheck(key);
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.X);
 
         // TODO(proj2): implement
         // Note: You should NOT update the root variable directly.
@@ -309,7 +309,7 @@ public class BPlusTree {
      */
     public void bulkLoad(Iterator<Pair<DataBox, RecordId>> data, float fillFactor) {
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.X);
 
         // TODO(proj2): implement
         // Note: You should NOT update the root variable directly.
@@ -341,7 +341,7 @@ public class BPlusTree {
     public void remove(DataBox key) {
         typeCheck(key);
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.X);
 
         // TODO(proj2): implement
         root.remove(key);
@@ -353,7 +353,7 @@ public class BPlusTree {
      */
     public String toSexp() {
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
         return root.toSexp();
     }
 
@@ -371,7 +371,7 @@ public class BPlusTree {
      */
     public String toDot() {
         // TODO(proj4_integration): Update the following line
-        LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
+        LockUtil.ensureSufficientLockHeld(lockContext, LockType.S);
 
         List<String> strings = new ArrayList<>();
         strings.add("digraph g {");

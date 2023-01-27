@@ -1,6 +1,8 @@
 package edu.berkeley.cs186.database.concurrency;
 
 import edu.berkeley.cs186.database.TransactionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 public class LockContext {
     // You should not remove any of these fields. You may add additional
     // fields/methods as you see fit.
+
+    private static final Logger LOG = LoggerFactory.getLogger(LockContext.class);
 
     /**
      * The underlying lock manager.
@@ -115,8 +119,11 @@ public class LockContext {
         panicWhenReadOnly();
         checkValidLock(transaction, lockType);
         lockManager.acquire(transaction, getResourceName(), lockType);
-        if (parentContext() != null) {
-            updateChildLockNum(transaction, 1);
+        final LockContext parentContext = parentContext();
+        if (parentContext != null) {
+            parentContext.updateChildLockNum(transaction, 1);
+            LOG.debug(String.format("acquire lock %s===> parent %s update parent's child num to %s%n%n",
+                    this, parent, parent.getNumChildren(transaction)));
         }
     }
 
@@ -127,15 +134,26 @@ public class LockContext {
      * @param txnCtx transaction
      * @param delta  add num
      */
-    protected void updateChildLockNum(TransactionContext txnCtx, int delta) {
+    private void updateChildLockNum(TransactionContext txnCtx, int delta) {
         final long transNum = txnCtx.getTransNum();
-        numChildLocks.putIfAbsent(transNum, 0);
-        numChildLocks.computeIfPresent(transNum, (k, v) -> {
+//        numChildLocks.putIfAbsent(transNum, 0);
+//        numChildLocks.computeIfPresent(transNum, (k, v) -> {
+//            v += delta;
+//            assert v >= 0;
+//            return v;
+//        });
+
+//        numChildLocks.putIfAbsent(transNum, 0);
+        numChildLocks.compute(transNum, (k, v) -> {
+            if (v == null) {
+                v = 0;
+            }
             v += delta;
-            assert v >= 0;
             return v;
         });
+//        numChildLocks.put(transNum, numChildLocks.get(transNum) + delta);
         final LockContext parentContext = parentContext();
+        LOG.debug("--->{} cNum {}\n", this, numChildLocks.get(transNum));
         if (parentContext != null) {
             parentContext.updateChildLockNum(txnCtx, delta);
         }
@@ -157,12 +175,14 @@ public class LockContext {
         // TODO(proj4_part2): implement
         panicWhenReadOnly();
         final LockContext parentContext = parentContext();
-        if (getNumChildren(transaction) > 0 && parentContext == null) {
+        if (getNumChildren(transaction) != 0) {
             throw new InvalidLockException("the release request is invalid");
         }
         lockManager.release(transaction, name);
         if (parentContext != null) {
-            updateChildLockNum(transaction, -1);
+            parentContext.updateChildLockNum(transaction, -1);
+            LOG.debug(String.format("release lock %s===> parent %s update parent's child num to %s%n%n",
+                    this, parent, parent.getNumChildren(transaction)));
         }
     }
 
@@ -202,12 +222,15 @@ public class LockContext {
         }
         //use atomic release and acquire to act promote
         final List<ResourceName> toRelease = sisDescendants(transaction);
-        toRelease.add(resourceName);
         updateChildLockNum(toRelease, transaction, -1);
+        //caveat the order, self context still hold the lock
+        toRelease.add(resourceName);
+        LOG.debug(String.format("promote lock %s===> parent %s update parent's child num to %s%n%n",
+                this, parent, parent.getNumChildren(transaction)));
         lockManager.acquireAndRelease(transaction, resourceName, newLockType, toRelease);
     }
 
-    protected void updateChildLockNum(List<ResourceName> toRelease, TransactionContext txnCtx, int delta) {
+    private void updateChildLockNum(List<ResourceName> toRelease, TransactionContext txnCtx, int delta) {
         toRelease.stream()
                 .map(resourceName -> fromResourceName(lockManager, resourceName).parentContext())
                 .filter(Objects::nonNull)
@@ -273,6 +296,8 @@ public class LockContext {
         final ResourceName resourceName = getResourceName();
         descendants.add(resourceName);
         updateChildLockNum(descendants, transaction, -1);
+        LOG.debug(String.format("escalate lock %s===> parent %s update parent's child num to %s%n%n",
+                this, parent, parent.getNumChildren(transaction)));
         if (isToX) {
             lockManager.acquireAndRelease(transaction, resourceName, LockType.X, descendants);
         } else {
