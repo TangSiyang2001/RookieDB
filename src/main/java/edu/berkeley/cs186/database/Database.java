@@ -931,12 +931,6 @@ public class Database implements AutoCloseable {
         public void close() {
             try {
                 // TODO(proj4_part2)
-//                final TransactionContext transaction = getTransaction();
-//                final List<Lock> locks = lockManager.getLocks(transaction);
-//                //notice the acquisition and save of locks are in order
-//                for (int i = locks.size() - 1; i >= 0; i--) {
-//                    LockContext.fromResourceName(lockManager, locks.get(i).name).release(transaction);
-//                }
                 List<Lock> locks = lockManager.getLocks(this);
                 Collections.reverse(locks);
                 for (Lock lock : locks) {

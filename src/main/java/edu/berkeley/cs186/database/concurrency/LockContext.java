@@ -136,14 +136,6 @@ public class LockContext {
      */
     private void updateChildLockNum(TransactionContext txnCtx, int delta) {
         final long transNum = txnCtx.getTransNum();
-//        numChildLocks.putIfAbsent(transNum, 0);
-//        numChildLocks.computeIfPresent(transNum, (k, v) -> {
-//            v += delta;
-//            assert v >= 0;
-//            return v;
-//        });
-
-//        numChildLocks.putIfAbsent(transNum, 0);
         numChildLocks.compute(transNum, (k, v) -> {
             if (v == null) {
                 v = 0;
@@ -151,7 +143,6 @@ public class LockContext {
             v += delta;
             return v;
         });
-//        numChildLocks.put(transNum, numChildLocks.get(transNum) + delta);
         final LockContext parentContext = parentContext();
         LOG.debug("--->{} cNum {}\n", this, numChildLocks.get(transNum));
         if (parentContext != null) {
